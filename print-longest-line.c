@@ -1,6 +1,6 @@
 #include <stdio.h>
 
-#define MAXLINE 1000 /* maximum input line size */
+#define MAXLINE 10 /* maximum input line size */
 
 int my_getline(char line[], int maxline);
 void copy(char to[], char from[]);
@@ -21,7 +21,7 @@ int main()
     }
   }
   if (max > 0) { /* there was a line */
-    printf("\nLongest: %s", longest);
+    printf("\nLongest: %s\n", longest);
   }
 
   return 0;
@@ -32,14 +32,25 @@ int my_getline(char s[], int lim)
 {
   int c, i;
 
-  for(i=0; i<lim-1 && (c=getchar())!=EOF && c!='\n'; ++i) {
-    s[i] = c;
+  for(i=0; (c=getchar())!=EOF && c!='\n'; ++i) {
+    if(i<lim-1) {
+      s[i] = c;
+    }
   }
   if(c == '\n') {
     s[i] = c;
     ++i;
   }
-  s[i] = '\0';
+
+  // do we need an ellipse?
+  if (i > lim - 1) {
+    s[lim - 4] = '.';
+    s[lim - 3] = '.';
+    s[lim - 2] = '.';
+    s[lim - 1] = '\0';
+  } else {
+    s[i] = '\0';
+  }
   return i;
 }
 
