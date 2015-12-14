@@ -7,7 +7,7 @@
 /* count lines, words and characters in input */
 int main()
 {
-  int c, i, state, current_length;
+  int c, i, j, state, current_length;
   int lengths[10];
 
   state = OUT;
@@ -32,6 +32,10 @@ int main()
 
   //NOTE: 
   for(i = 0; i < MAX_LENGTH; ++i) {
-    printf("%d\t%d\n", i + 1, lengths[i]);
+    printf("%2d|", i + 1);
+    for(j = 0; j < lengths[i]; ++j) {
+      putchar('*');
+    }
+    printf("\n");
   }
 }
