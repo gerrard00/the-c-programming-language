@@ -7,11 +7,11 @@
 #define DEBUG 0
 #define TEST 0
 
-#if DEBUG
-#define SPACE '-'
-#else
+//#if DEBUG
+//#define SPACE '-'
+//#else
 #define SPACE ' '
-#endif 
+//#endif 
 
 int my_getline(char line[], int len);
 int debug_getline(char s[], int max_len); 
@@ -104,13 +104,12 @@ int use_tabs(char s[], int len)
       i, columnIndex, inWord, indexOfWordEnd, s[i]);
 #endif
     if (!inWord && columnIndex % TABSTOP == 0) {
-        numberOfSpaces = i - indexOfWordEnd - 1;
+      numberOfSpaces = i - indexOfWordEnd - 1;
           // ...check for spaces to replace
 #if DEBUG
-          printf("#sp: %d\n", numberOfSpaces);
+        printf("#sp: %d\n", numberOfSpaces);
 #endif
-        if(numberOfSpaces > 1
-            || (numberOfSpaces = 1 && s[i] == SPACE)) {
+        if(numberOfSpaces > 1) {
           newTabIndex = indexOfWordEnd + 1;
 #if DEBUG
           printf("need some tab action: startIndex %d endIndex: %d\n",
@@ -124,19 +123,23 @@ int use_tabs(char s[], int len)
           printf("%s\n", s);
           printf("reset i: %d\n", i);
 #endif
+        } else {
+          //we can't go back over a tab stop
+          indexOfWordEnd = i;
         }
+    }
+    
+    if(s[i] == SPACE) {
+      if (inWord) {
+        indexOfWordEnd = i - 1;
+        inWord = 0;
+      }
     } else {
-      if(s[i] == SPACE) {
-        if (inWord) {
-          indexOfWordEnd = i - 1;
-          inWord = 0;
-        }
-      } else {
-        if (!inWord) {
-          inWord = 1;
-        }
+      if (!inWord) {
+        inWord = 1;
       }
     }
+  
     i++;
     columnIndex++;
   }
@@ -228,6 +231,14 @@ int debug_getline(char s[], int _)
     case 5:
       len = strlen("0123456789012345  gerrard     lindsay\n") + 1;
       memcpy(s,    "0123456789012345  gerrard     lindsay\n", len);
+      break;
+    case 6:
+      len = strlen("this    e               slfdk\n") + 1;
+      memcpy(s,    "this    e               slfdk\n", len);
+    case 7:
+      len = strlen("01234567 90123   7\n") + 1;
+      memcpy(s,    "01234567 90123   7\n", len);
+      break;
       break;
     default:
       len = 0;
