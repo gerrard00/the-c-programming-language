@@ -2,6 +2,7 @@
 
 #define MAXLINE 1000
 #define TABSTOP 8
+#define TEST 0
 
 int my_getline(char line[], int len);
 int replace_tabs(char s[], int len); 
