@@ -6,7 +6,8 @@
  * and long variables, both signed and unsigned, by printing appropriate values
  * from standard headers and by direct computation. Harder if you compute them:
  * determine the ranges of the various floating-point types.*/
-// my kingdom for macros, but not at that point in book
+// note; my kingdom for macros, but not at that point in book
+// note; not going to use math.h
 
 const float FLOAT_INFINITY = 1.0f/0.0f;
 const double DOUBLE_INFINITY = 1.0/0.0;
@@ -16,7 +17,9 @@ void get_range_char(char *min, char *max);
 void get_range_short(short *min, short *max);
 void get_range_int(int *min, int *max);
 void get_range_long(long *min, long *max);
-void get_range_float(float *min, float *max);
+int get_largest_exponent_float();
+void get_max_float(float *max, int exponent);
+void get_min_float(float *min, int exponent);
 void get_range_double(double *min, double *max);
 void get_range_long_double(long double *min, long double *max);
 
@@ -55,10 +58,13 @@ int main()
   printf("\tdouble\t%.10e\t%.10e\n", DBL_MIN, DBL_MAX);
   printf("\tlong\t%.10Le\t%.10Le\n", LDBL_MIN, LDBL_MAX);
 
-  //TODO: find ranges bycomputation for float
   printf("\nFloat computation:\n");
   float flt_min, flt_max;
-  get_range_float(&flt_min, &flt_max);
+  // the largest exponent supported by the type
+  int float_largest_exponent; 
+  float_largest_exponent = get_largest_exponent_float();
+  get_max_float(&flt_max, float_largest_exponent);
+  get_min_float(&flt_min, float_largest_exponent);
   printf("\tfloat\t%.10e\t%.10e\n", flt_min, flt_max);
   double dbl_min, dbl_max;
   get_range_double(&dbl_min, &dbl_max);
@@ -140,35 +146,57 @@ void get_range_long(long *min, long *max)
   *max = current - 1;
 }
 
-//this would be easier with pow
-float get_largest_exponent_float() 
+int get_largest_exponent_float() 
 {
-  float exponent, last_exponent;
+  int exponent;
+  float value, last_value;
 
-  exponent = 1;
-  last_exponent =  0;
-  while (exponent != FLOAT_INFINITY &&
-      exponent > last_exponent) {
-    last_exponent = exponent;
-    exponent *= 10; 
+  exponent = 0;
+  value = 1;
+  last_value =  0;
+
+  while (value != FLOAT_INFINITY &&
+      value > last_value) {
+    last_value = value;
+    value *= 10; 
+    ++exponent;
   }
-  return last_exponent;
+
+  return --exponent;
 }
 
-void get_range_float(float *min, float *max)
+float pow_float(float signifigand, int exponent) 
 {
-  float exponent;
+  float result = signifigand;
+  int i, multiplier;
+
+  if (exponent >= 0) {
+    multiplier = 10;
+  } else {
+    multiplier = -10;
+    exponent *= -1;
+  }
+
+  for(i = 0; i < exponent; i++) {
+    result *= multiplier;
+  }
+
+  return result;
+}
+
+void get_max_float(float *max, int largest_exponent)
+{
   float signifigand, last_signifigand;
   float current_total, last_inner_total;
-
-  exponent = get_largest_exponent_float();
+  float base_and_exponent;
 
   *max = 0;
   signifigand = 1;
   current_total = 1;
+  base_and_exponent = pow_float(1, largest_exponent);
 
-  while(signifigand < FLOAT_INFINITY && exponent > 0) {
-    current_total = signifigand * exponent; 
+  while(signifigand < FLOAT_INFINITY && base_and_exponent > 0) {
+    current_total = signifigand * base_and_exponent; 
     if (current_total > *max && current_total < FLOAT_INFINITY) {
       *max = current_total;
     }
@@ -179,16 +207,20 @@ void get_range_float(float *min, float *max)
       last_signifigand = signifigand;
       signifigand++;
       last_inner_total = current_total;
-      current_total = signifigand * exponent; 
+      current_total = signifigand * base_and_exponent; 
     }
     signifigand = last_signifigand;
 
-    exponent /= 10;
+    base_and_exponent /= 10;
     signifigand *= 10;
   }
+}
 
-  //TODO: need min
-  *min = 0;
+void get_min_float(float *min, int largest_exponent)
+{
+
+  //TODO: implement
+  *min = -1;
 }
 
 double get_largest_exponent_double() 
