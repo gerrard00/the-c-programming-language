@@ -17,11 +17,21 @@ void get_range_char(char *min, char *max);
 void get_range_short(short *min, short *max);
 void get_range_int(int *min, int *max);
 void get_range_long(long *min, long *max);
+
 int get_largest_exponent_float();
+float pow_float(float signifigand, int exponent);
 void get_max_float(float *max, int exponent);
 void get_min_float(float *min, int exponent);
-void get_range_double(double *min, double *max);
-void get_range_long_double(long double *min, long double *max);
+
+int get_largest_exponent_double();
+double pow_double(double signifigand, int exponent); 
+void get_max_double(double *max, int exponent);
+void get_min_double(double *min, int exponent);
+
+int get_largest_exponent_long_double();
+long double pow_long_double(long double signifigand, int exponent);
+void get_max_long_double(long double *max, int exponent);
+void get_min_long_double(long double *min, int exponent);
 
 int main() 
 {
@@ -59,18 +69,24 @@ int main()
   printf("\tlong\t%.10Le\t%.10Le\n", LDBL_MIN, LDBL_MAX);
 
   printf("\nFloat computation:\n");
+
   float flt_min, flt_max;
-  // the largest exponent supported by the type
-  int float_largest_exponent; 
-  float_largest_exponent = get_largest_exponent_float();
-  get_max_float(&flt_max, float_largest_exponent);
-  get_min_float(&flt_min, float_largest_exponent);
+  int largest_exponent_float; 
+  largest_exponent_float = get_largest_exponent_float();
+  get_max_float(&flt_max, largest_exponent_float);
+  //get_min_float(&flt_min, largest_exponent_float);
   printf("\tfloat\t%.10e\t%.10e\n", flt_min, flt_max);
+
   double dbl_min, dbl_max;
-  get_range_double(&dbl_min, &dbl_max);
+  int largest_exponent_double;
+  largest_exponent_double = get_largest_exponent_double();
+  get_max_double(&dbl_max, largest_exponent_double);
   printf("\tdouble\t%.10e\t%.10e\n", dbl_min, dbl_max);
+
   long double ldbl_min, ldbl_max;
-  get_range_long_double(&ldbl_min, &ldbl_max);
+  int largest_exponent_long_double;
+  largest_exponent_long_double = get_largest_exponent_long_double();
+  get_max_long_double(&ldbl_max, largest_exponent_long_double);
   printf("\tlong\t%.10Le\t%.10Le\n", ldbl_min, ldbl_max);
 }
 
@@ -165,15 +181,94 @@ int get_largest_exponent_float()
   return --exponent;
 }
 
+int get_largest_exponent_double() 
+{
+  int exponent;
+  double value, last_value;
+
+  exponent = 0;
+  value = 1;
+  last_value =  0;
+
+  while (value != DOUBLE_INFINITY &&
+      value > last_value) {
+    last_value = value;
+    value *= 10; 
+    ++exponent;
+  }
+
+  return --exponent;
+}
+
+int get_largest_exponent_long_double() 
+{
+  int exponent;
+  long double value, last_value;
+
+  exponent = 0;
+  value = 1;
+  last_value =  0;
+
+  while (value != LONG_DOUBLE_INFINITY &&
+      value > last_value) {
+    last_value = value;
+    value *= 10; 
+    ++exponent;
+  }
+
+  return --exponent;
+}
+
 float pow_float(float signifigand, int exponent) 
 {
   float result = signifigand;
-  int i, multiplier;
+  float multiplier;
+  int i;
 
   if (exponent >= 0) {
     multiplier = 10;
   } else {
-    multiplier = -10;
+    multiplier = 0.1;
+    exponent *= -1;
+  }
+
+  for(i = 0; i < exponent; i++) {
+    result *= multiplier;
+  }
+
+  return result;
+}
+
+double pow_double(double signifigand, int exponent) 
+{
+  double result = signifigand;
+  double multiplier;
+  int i;
+
+  if (exponent >= 0) {
+    multiplier = 10;
+  } else {
+    multiplier = 0.1;
+    exponent *= -1;
+  }
+
+  for(i = 0; i < exponent; i++) {
+    result *= multiplier;
+  }
+
+  return result;
+}
+
+long double pow_long_double(long double signifigand, int exponent)
+{
+  long double result = signifigand;
+  long double multiplier;
+  int i;
+
+  if (exponent >= 0) {
+    multiplier = 10;
+  } else {
+    multiplier = 0.1;
     exponent *= -1;
   }
 
@@ -218,23 +313,81 @@ void get_max_float(float *max, int largest_exponent)
 
 void get_min_float(float *min, int largest_exponent)
 {
+  float signifigand, last_signifigand;
+  float current_total, last_inner_total;
+  float base_and_exponent;
 
-  //TODO: implement
-  *min = -1;
+  float fuck = 0;
+  *min = 1;
+  signifigand = 1;
+  current_total = 1;
+  base_and_exponent = pow_float(1, 0 - largest_exponent);
+  printf("base_and_exponent: %.10e\n", base_and_exponent);
+  printf("signifigand: %.10e\n", signifigand);
+
+  while(signifigand > fuck && base_and_exponent > fuck) {
+    current_total = signifigand * base_and_exponent; 
+    printf("current_total: %.10e\n", current_total);
+    if (current_total < *min && current_total > fuck) {
+      *min = current_total;
+    }
+
+    last_inner_total = fuck;
+    while(current_total > fuck 
+        && last_inner_total != current_total) {
+      last_signifigand = signifigand;
+      signifigand--;
+      last_inner_total = current_total;
+      current_total = signifigand * base_and_exponent; 
+      /* printf("-> %.10e\n", current_total); */
+      /* printf("-> %f\n", current_total); */
+    }
+    signifigand = last_signifigand;
+
+    base_and_exponent *= 10;
+    signifigand /= 10;
+    printf("signifigand: %.10e\n", signifigand);
+  }
+
+  printf("final: %d\n", *min > fuck);
+  printf("bigger than fuck: %d\n", FLT_MIN > fuck);
+  printf("equal: %d\n", *min == FLT_MIN);
+  printf("greater than min: %d\n", *min > FLT_MIN);
+  printf("lower than min: %d\n", *min < FLT_MIN);
+  printf("final: %.10e\n", *min - FLT_MIN);
+  printf("true min: %.10e\n", FLT_TRUE_MIN);
 }
 
-double get_largest_exponent_double() 
+void get_max_double(double *max, int largest_exponent)
 {
-  double exponent, last_exponent;
+  double signifigand, last_signifigand;
+  double current_total, last_inner_total;
+  double base_and_exponent;
 
-  exponent = 1;
-  last_exponent =  0;
-  while (exponent != DOUBLE_INFINITY &&
-      exponent > last_exponent) {
-    last_exponent = exponent;
-    exponent *= 10; 
+  *max = 0;
+  signifigand = 1;
+  current_total = 1;
+  base_and_exponent = pow_double(1, largest_exponent);
+
+  while(signifigand < DOUBLE_INFINITY && base_and_exponent > 0) {
+    current_total = signifigand * base_and_exponent; 
+    if (current_total > *max && current_total < DOUBLE_INFINITY) {
+      *max = current_total;
+    }
+
+    last_inner_total = 0;
+    while(current_total < DOUBLE_INFINITY 
+        && last_inner_total != current_total) {
+      last_signifigand = signifigand;
+      signifigand++;
+      last_inner_total = current_total;
+      current_total = signifigand * base_and_exponent; 
+    }
+    signifigand = last_signifigand;
+
+    base_and_exponent /= 10;
+    signifigand *= 10;
   }
-  return last_exponent;
 }
 
 void get_range_double(double *min, double *max)
@@ -273,20 +426,6 @@ void get_range_double(double *min, double *max)
   *min = 0;
 }
 
-long double get_largest_exponent_long_double() 
-{
-  long double exponent, last_exponent;
-
-  exponent = 1;
-  last_exponent =  0;
-  while (exponent != LONG_DOUBLE_INFINITY &&
-      exponent > last_exponent) {
-    last_exponent = exponent;
-    exponent *= 10; 
-  }
-  return last_exponent;
-}
-
 void get_range_long_double(long double *min, long double *max)
 {
   long double exponent;
@@ -321,4 +460,36 @@ void get_range_long_double(long double *min, long double *max)
 
   //TODO: need min
   *min = 0;
+}
+
+void get_max_long_double(long double *max, int largest_exponent)
+{
+  long double signifigand, last_signifigand;
+  long double current_total, last_inner_total;
+  long double base_and_exponent;
+
+  *max = 0;
+  signifigand = 1;
+  current_total = 1;
+  base_and_exponent = pow_long_double(1, largest_exponent);
+
+  while(signifigand < DOUBLE_INFINITY && base_and_exponent > 0) {
+    current_total = signifigand * base_and_exponent; 
+    if (current_total > *max && current_total < DOUBLE_INFINITY) {
+      *max = current_total;
+    }
+
+    last_inner_total = 0;
+    while(current_total < DOUBLE_INFINITY 
+        && last_inner_total != current_total) {
+      last_signifigand = signifigand;
+      signifigand++;
+      last_inner_total = current_total;
+      current_total = signifigand * base_and_exponent; 
+    }
+    signifigand = last_signifigand;
+
+    base_and_exponent /= 10;
+    signifigand *= 10;
+  }
 }
