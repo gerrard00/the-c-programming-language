@@ -64,9 +64,9 @@ int main()
   printf("\tulong\t%20d\t%20lu\n", 0, 2U * long_max + 1);
 
   printf("\nFloat from headers:\n");
-  printf("\tfloat\t%.10e\t%.10e\n", FLT_MIN, FLT_MAX);
-  printf("\tdouble\t%.10e\t%.10e\n", DBL_MIN, DBL_MAX);
-  printf("\tlong\t%.10Le\t%.10Le\n", LDBL_MIN, LDBL_MAX);
+  printf("\tfloat\t%.10e\t%.10e\n", FLT_TRUE_MIN, FLT_MAX);
+  printf("\tdouble\t%.10e\t%.10e\n", DBL_TRUE_MIN, DBL_MAX);
+  printf("\tlong\t%.10Le\t%.10Le\n", LDBL_TRUE_MIN, LDBL_MAX);
 
   printf("\nFloat computation:\n");
 
@@ -74,20 +74,21 @@ int main()
   int largest_exponent_float; 
   largest_exponent_float = get_largest_exponent_float();
   get_max_float(&flt_max, largest_exponent_float);
-  //get_min_float(&flt_min, largest_exponent_float);
+  get_min_float(&flt_min, largest_exponent_float);
   printf("\tfloat\t%.10e\t%.10e\n", flt_min, flt_max);
 
   double dbl_min, dbl_max;
   int largest_exponent_double;
   largest_exponent_double = get_largest_exponent_double();
   get_max_double(&dbl_max, largest_exponent_double);
+  get_min_double(&dbl_min, largest_exponent_double);
   printf("\tdouble\t%.10e\t%.10e\n", dbl_min, dbl_max);
 
-  long double ldbl_min, ldbl_max;
-  int largest_exponent_long_double;
-  largest_exponent_long_double = get_largest_exponent_long_double();
-  get_max_long_double(&ldbl_max, largest_exponent_long_double);
-  printf("\tlong\t%.10Le\t%.10Le\n", ldbl_min, ldbl_max);
+  /* long double ldbl_min, ldbl_max; */
+  /* int largest_exponent_long_double; */
+  /* largest_exponent_long_double = get_largest_exponent_long_double(); */
+  /* get_max_long_double(&ldbl_max, largest_exponent_long_double); */
+  /* printf("\tlong\t%.10Le\t%.10Le\n", ldbl_min, ldbl_max); */
 }
 
 void get_range_char(char *min, char *max)
@@ -313,49 +314,19 @@ void get_max_float(float *max, int largest_exponent)
 
 void get_min_float(float *min, int largest_exponent)
 {
-  float signifigand, last_signifigand;
-  float current_total, last_inner_total;
-  float base_and_exponent;
+  float value;
 
-  float fuck = 0;
-  *min = 1;
-  signifigand = 1;
-  current_total = 1;
-  base_and_exponent = pow_float(1, 0 - largest_exponent);
-  printf("base_and_exponent: %.10e\n", base_and_exponent);
-  printf("signifigand: %.10e\n", signifigand);
+  *min = value = pow_float(1, 0 - largest_exponent);
+  /* printf("initial value: %.10e\n", value); */
 
-  while(signifigand > fuck && base_and_exponent > fuck) {
-    current_total = signifigand * base_and_exponent; 
-    printf("current_total: %.10e\n", current_total);
-    if (current_total < *min && current_total > fuck) {
-      *min = current_total;
+  while(value > 0) { 
+    if (value < *min) {
+      *min = value;
+      /* printf("\t\tmake min: %.10e\n", *min); */
     }
 
-    last_inner_total = fuck;
-    while(current_total > fuck 
-        && last_inner_total != current_total) {
-      last_signifigand = signifigand;
-      signifigand--;
-      last_inner_total = current_total;
-      current_total = signifigand * base_and_exponent; 
-      /* printf("-> %.10e\n", current_total); */
-      /* printf("-> %f\n", current_total); */
-    }
-    signifigand = last_signifigand;
-
-    base_and_exponent *= 10;
-    signifigand /= 10;
-    printf("signifigand: %.10e\n", signifigand);
+    value /= 10;
   }
-
-  printf("final: %d\n", *min > fuck);
-  printf("bigger than fuck: %d\n", FLT_MIN > fuck);
-  printf("equal: %d\n", *min == FLT_MIN);
-  printf("greater than min: %d\n", *min > FLT_MIN);
-  printf("lower than min: %d\n", *min < FLT_MIN);
-  printf("final: %.10e\n", *min - FLT_MIN);
-  printf("true min: %.10e\n", FLT_TRUE_MIN);
 }
 
 void get_max_double(double *max, int largest_exponent)
@@ -390,76 +361,35 @@ void get_max_double(double *max, int largest_exponent)
   }
 }
 
-void get_range_double(double *min, double *max)
+void get_min_double(double *min, int largest_exponent)
 {
-  double exponent;
-  double signifigand, last_signifigand;
-  double current_total, last_inner_total;
+  double value, last_value;
+  int divisor = 10;
 
-  exponent = get_largest_exponent_double();
+  *min = value = pow_double(1, 0 - largest_exponent);
+  /* printf("initial value: %.10e\n", value); */
 
-  *max = 0;
-  signifigand = 1;
-  current_total = 1;
+  while (divisor > 0) {
+    last_value = 0;
+    while(value > 0 && value != last_value) { 
+      last_value = value;
 
-  while(signifigand < DOUBLE_INFINITY && exponent > 0) {
-    current_total = signifigand * exponent; 
-    if (current_total > *max && current_total < DOUBLE_INFINITY) {
-      *max = current_total;
+      if (value < *min) {
+        *min = value;
+        /* printf("\t\tmake min: %.10e\n", *min); */
+      }
+      value /= divisor;
     }
 
-    last_inner_total = 0;
-    while(current_total < DOUBLE_INFINITY 
-        && last_inner_total != current_total) {
-      last_signifigand = signifigand;
-      signifigand++;
-      last_inner_total = current_total;
-      current_total = signifigand * exponent; 
-    }
-    signifigand = last_signifigand;
-
-    exponent /= 10;
-    signifigand *= 10;
+    value = *min;
+    divisor--;
   }
 
-  //TODO: need min
-  *min = 0;
-}
-
-void get_range_long_double(long double *min, long double *max)
-{
-  long double exponent;
-  long double signifigand, last_signifigand;
-  long double current_total, last_inner_total;
-
-  exponent = get_largest_exponent_long_double();
-
-  *max = 0;
-  signifigand = 1;
-  current_total = 1;
-
-  while(signifigand < LONG_DOUBLE_INFINITY && exponent > 0) {
-    current_total = signifigand * exponent; 
-    if (current_total > *max && current_total < LONG_DOUBLE_INFINITY) {
-      *max = current_total;
-    }
-
-    last_inner_total = 0;
-    while(current_total < LONG_DOUBLE_INFINITY 
-        && last_inner_total != current_total) {
-      last_signifigand = signifigand;
-      signifigand++;
-      last_inner_total = current_total;
-      current_total = signifigand * exponent; 
-    }
-    signifigand = last_signifigand;
-
-    exponent /= 10;
-    signifigand *= 10;
-  }
-
-  //TODO: need min
-  *min = 0;
+  /* printf("value:\t%.10e\n", value); */
+  /* printf("min:\t%.10e\n", *min); */
+  /* printf("header:\t%.10e\n", DBL_TRUE_MIN); */
+  /* printf("diff:\t%.10e\n", *min - DBL_TRUE_MIN); */
+  /* printf("div:\t%.10e\n", *min / 2); */
 }
 
 void get_max_long_double(long double *max, int largest_exponent)
