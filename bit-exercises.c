@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <assert.h>
 #include "dump-bits.h"
 
 unsigned get_clear_mask(int p, int n) 
@@ -16,23 +17,11 @@ unsigned setbits(unsigned x, int p, int n, unsigned y)
 {
   unsigned y_mask;
 
-  /* printf("\n"); */
-  /* printf("x:\t"); */
-  /* dump_bits(x); */
-  /* printf("y:\t"); */
-  /* dump_bits(y); */
-  /* printf("\n"); */
-
-  /* printf("clear input:\t"); */
-  /* dump_bits(get_clear_mask(p - n + 1, 4)); */
-
-  y_mask = (y & get_clear_mask(0, 4)) << (p - n + 1);
-  /* printf("y mask:\t"); */
-  /* dump_bits(y_mask); */
+  y_mask = (y & get_clear_mask(0, n)) << (p - n + 1);
 
   // first set our target section of x to all zeros,
   // then 'or' with our mask 
-  return (x & ~get_clear_mask(p - n + 1, 4)) | y_mask;
+  return (x & ~get_clear_mask(p - n + 1, n)) | y_mask;
 }
 
 void test_setbits(unsigned x, int y, int p, int n, unsigned expected_result)
@@ -40,16 +29,18 @@ void test_setbits(unsigned x, int y, int p, int n, unsigned expected_result)
   unsigned result = setbits(x, p, n, y);
 
   printf("\nResults:\n\n");
-  printf("%-15s", "Expected:");
+  printf("\t%-15s", "Expected:");
   dump_bits(expected_result);
-  printf("%-15s", "Actual:");
+  printf("\t%-15s", "Actual:");
   dump_bits(result);
+  assert(result == expected_result);
 }
 
 int main() 
 {
   test_setbits(87, 458, 7, 4, 167);
+  test_setbits(144, 7, 5, 3, 184);
 
-  /* printf("%ld\n", strtol("0101", NULL, 2)); */
+  /* printf("%ld\n", strtol("10111000", NULL, 2)); */
 }
 
