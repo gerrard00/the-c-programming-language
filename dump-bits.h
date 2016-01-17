@@ -1,5 +1,5 @@
 #pragma once
-
-#define BITS_TO_SHOW 16
+#include <limits.h>
+#define BITS_TO_SHOW __WORDSIZE/2
 
 void dump_bits(int val);

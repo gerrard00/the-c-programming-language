@@ -18,8 +18,7 @@
 
 void dump_bits(int val)
 {
-  /* int mask = 1; */
-  int mask = 1 << (BITS_TO_SHOW - 1);
+  unsigned mask = 1 << (BITS_TO_SHOW - 1);
   char output;
 
   for(int i = 0; i < BITS_TO_SHOW; i++) {
