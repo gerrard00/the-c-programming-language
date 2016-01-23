@@ -87,16 +87,30 @@ void ungetch(int);
 /* getop: get next operator or numeric operand */
 int getop(char s[])
 {
-  int i, c;
+  int i, c, next_c;
 
   while((s[0] = c  = getch()) == ' ' || c == '\t') {
     ;
   }
   s[1] = '\0';
-  if (!isdigit(c) && c != '.') {
+  if (!isdigit(c) && c != '.' && c != '-') {
     return c; /* not a number */
   }
   i = 0;
+  /* collect negative sign, if present */
+  if (c == '-') {
+    /* could be a subtract operator or a negative sign */  
+    next_c = getch();
+
+    if (!isdigit(next_c)) {
+      /* it's a subtract operator */
+      ungetch(next_c);
+      return c;
+    }
+
+    /* it's a negative sign */
+    c = s[++i] = next_c;
+  }
   /* collect integer part */
   if(isdigit(c)) {
     while (isdigit(s[++i] = c = getch())) {
