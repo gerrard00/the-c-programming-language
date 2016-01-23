@@ -7,6 +7,8 @@
 int getop(char []);
 void push(double);
 double pop(void);
+double peek(void);
+void dupe(void);
 
 /* reverse Polish calculator */
 int main()
@@ -44,10 +46,18 @@ int main()
         break;
       case '\n':
         printf("----------\n");
-        printf("\t%.8g\n", pop());
+        printf("\t%.8g\n", peek());
+        break;
+      case 'p':
+        printf("%f\n", peek());
+        break;
+      case 'd':
+        dupe();
+        printf("%f\n", peek());
         break;
       default:
         printf("error: unknown command %s\n", s);
+        break;
     }
   }
   return 0;
@@ -76,6 +86,28 @@ double pop(void)
   } else {
     printf("error: stack empty\n");
     return 0.0;
+  }
+}
+
+/* peek: peek at top value from stack, without popping */
+double peek(void)
+{
+  if (sp > 0) {
+    return val[sp - 1];
+  } else {
+    printf("error: stack empty\n");
+    return 0.0;
+  }
+}
+
+/* dupe: dupe the top value from stack */
+void dupe(void)
+{
+  if (sp > 0) {
+    sp++;
+    val[sp - 1] = val[sp - 2];
+  } else {
+    printf("error: stack empty\n");
   }
 }
 
