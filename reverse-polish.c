@@ -9,6 +9,9 @@ void push(double);
 double pop(void);
 double peek(void);
 void dupe(void);
+void clear(void);
+void swap(void);
+void dump(void);
 
 /* reverse Polish calculator */
 int main()
@@ -55,6 +58,17 @@ int main()
         dupe();
         printf("%f\n", peek());
         break;
+      case 'c':
+        clear();
+        printf("%f\n", 0.0);
+        break;
+      case 's':
+        swap();
+        printf("%f\n", peek());
+        break;
+      case 'z':
+        dump();
+        break;
       default:
         printf("error: unknown command %s\n", s);
         break;
@@ -95,7 +109,8 @@ double peek(void)
   if (sp > 0) {
     return val[sp - 1];
   } else {
-    printf("error: stack empty\n");
+    /* don't show an error, we sometimes peek at an empty stack */
+    /* printf("error: stack empty\n"); */
     return 0.0;
   }
 }
@@ -108,6 +123,28 @@ void dupe(void)
     val[sp - 1] = val[sp - 2];
   } else {
     printf("error: stack empty\n");
+  }
+}
+
+/* clear: clear the stack */
+void clear(void)
+{
+  sp = 0;
+}
+
+/* swap: swap the top two items on the stack */
+void swap(void)
+{
+  float temp = val[sp - 1];
+  val[sp - 1] = val[sp - 2];
+  val[sp - 2] = temp;
+}
+
+/* dump: dump the top two items on the stack */
+void dump(void)
+{
+  for(int i = 0; i < sp; i++) {
+    printf("(%3d) %f\n", i, val[i]);
   }
 }
 
