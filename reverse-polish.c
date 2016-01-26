@@ -2,6 +2,7 @@
 #include <stdlib.h> /* for atof() */
 #include <math.h>
 #include <string.h>
+#include <stdbool.h>
 
 #define MAXOP 100   /* max size of operand or operator */
 #define NUMBER '0'  /* signal that a number was found */
@@ -16,6 +17,8 @@ void swap(void);
 void dump(void);
 void get_full_op(char s[]);
 void handle_library_function(char s[]);
+void set_variable(char variable_name, float val);
+float get_variable(void);
 
 /* reverse Polish calculator */
 int main()
@@ -76,8 +79,15 @@ int main()
       case '@':
         handle_library_function(s);
         break;
+      case '$':
+        push(get_variable());
+        break;
       default:
-        printf("error: unknown command %s\n", s);
+        if (type >= 'a' && type <= 'z') {
+          set_variable(type, pop());
+        } else {
+          printf("error: unknown command %s\n", s);
+        }
         break;
     }
   }
@@ -150,9 +160,11 @@ void swap(void)
 /* dump: dump the top two items on the stack */
 void dump(void)
 {
+  printf("<<<<dump>>>\n");
   for(int i = 0; i < sp; i++) {
     printf("(%3d) %f\n", i, val[i]);
   }
+  printf("<<<<\\dump>>>\n");
 }
 
 #include <ctype.h>
@@ -175,7 +187,7 @@ int getop(char s[])
   i = 0;
   /* collect negative sign, if present */
   if (c == '-') {
-    /* could be a subtract operator or a negative sign */  
+    /* could be a subtract operator or a negative sign */
     next_c = getch();
 
     if (!isdigit(next_c)) {
@@ -233,24 +245,63 @@ void handle_library_function(char s[])
   get_full_op(s);
 
   if (strcmp(s, "sin") == 0) {
-    push(sin(pop())); 
+    push(sin(pop()));
   } else if (strcmp(s, "exp") == 0) {
-    push(exp(pop())); 
+    push(exp(pop()));
    } else if (strcmp(s, "pow") == 0) {
     op2 = pop();
-    push(pow(pop(), op2)); 
+    push(pow(pop(), op2));
   } else {
     printf("error: unknown library command %s\n", s);
   }
+}
+
+// create a global to hold our variable values, initialized to zeros
+#define NUMBER_OF_VARIABLES 26
+#define VARIABLE_NOT_FOUND -1
+float variables[NUMBER_OF_VARIABLES] = {0};
+float last_variable = 0;
+
+//TODO: support $$ as special last value seen
+
+int get_variable_index(char variable_name)
+{
+  if (variable_name >= 0 || variable_name < NUMBER_OF_VARIABLES) {
+    return variable_name - '0';
+  } else {
+    printf("Unknown variable %c\n", variable_name);
+    return VARIABLE_NOT_FOUND;
+  }
+}
+
+void set_variable(char variable_name, float val)
+{
+  int variable_index;
+  if ((variable_index = get_variable_index(variable_name))
+      != VARIABLE_NOT_FOUND) {
+    variables[variable_index] = val;
+  }
+}
+
+float get_variable()
+{
+  char variable_name = getch();
+  int variable_index;
+
+  if ((variable_index = get_variable_index(variable_name))
+      != VARIABLE_NOT_FOUND) {
+    return variables[variable_index];
+  }
+  return 0.0;
 }
 
 void get_full_op(char s[])
 {
   int i = 0;
   char c;
-  while((s[i++] = c  = getch()) != ' ' 
-      &&  c != '\t' 
-      && c != '\n'  
+  while((s[i++] = c  = getch()) != ' '
+      &&  c != '\t'
+      && c != '\n'
       && c != '\0'
       && c != EOF) {
     ;

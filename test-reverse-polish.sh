@@ -1,25 +1,36 @@
 #! /bin/zsh
 
-echo "Test $1\n"
-clang -g -Wall -Wextra -Wpedantic -lm $1.c -o $1.o &&./$1.o || exit 1
+echo "Test reverse-polish\n"
+clang -g -Wall -Wextra -Wpedantic -lm reverse-polish.c -o reverse-polish.o &&./reverse-polish.o || exit 1
 
 mkfifo mypipe
-./$1.o < mypipe &
+./reverse-polish.o < mypipe &
 
-echo "1 2 - 4 5 + *"
-echo "1 2 - 4 5 + *" > mypipe
+# echo "1 2 - 4 5 + *"
+# echo "1 2 - 4 5 + *" > mypipe
 
-echo "1 2 *"
-echo "1 2 *" > mypipe
+# echo
+# echo "1 2 *"
+# echo "1 2 *" > mypipe
 
-echo "45 @sin"
-echo "45 @sin" > mypipe
+# echo
+# echo "45 @sin"
+# echo "45 @sin" > mypipe
 
-echo "3 @exp"
-echo "3 @exp" > mypipe
+# echo
+# echo "3 @exp"
+# echo "3 @exp" > mypipe
 
-echo "2 3 @pow"
-echo "2 3 @pow" > mypipe
+# echo
+# echo "2 3 @pow"
+# echo "2 3 @pow" > mypipe
+
+echo
+echo "4 a" > mypipe
+echo "p" > mypipe
+echo "3 b" > mypipe
+echo "c" > mypipe
+echo '$b $a @pow' > mypipe
 
 rm mypipe
 
