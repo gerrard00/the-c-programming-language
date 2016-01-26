@@ -15,6 +15,12 @@ echo "1 2 *" > mypipe
 echo "45 @sin"
 echo "45 @sin" > mypipe
 
+echo "3 @exp"
+echo "3 @exp" > mypipe
+
+echo "2 3 @pow"
+echo "2 3 @pow" > mypipe
+
 rm mypipe
 
 echo

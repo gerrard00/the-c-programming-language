@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h> /* for atof() */
 #include <math.h>
+#include <string.h>
 
 #define MAXOP 100   /* max size of operand or operator */
 #define NUMBER '0'  /* signal that a number was found */
@@ -13,6 +14,8 @@ void dupe(void);
 void clear(void);
 void swap(void);
 void dump(void);
+void get_full_op(char s[]);
+void handle_library_function(char s[]);
 
 /* reverse Polish calculator */
 int main()
@@ -49,8 +52,8 @@ int main()
         push((int)pop() % (int)op2);
         break;
       case '\n':
-        printf("----------\n");
-        printf("\t%.8g\n", peek());
+        printf("--------------\n");
+        printf("\t%f\n", peek());
         break;
       case 'p':
         printf("%f\n", peek());
@@ -69,6 +72,9 @@ int main()
         break;
       case 'z':
         dump();
+        break;
+      case '@':
+        handle_library_function(s);
         break;
       default:
         printf("error: unknown command %s\n", s);
@@ -220,3 +226,39 @@ void ungetch(int c)
     buf[bufp++] = c;
   }
 }
+
+void handle_library_function(char s[])
+{
+  float op2;
+  get_full_op(s);
+
+  if (strcmp(s, "sin") == 0) {
+    push(sin(pop())); 
+  } else if (strcmp(s, "exp") == 0) {
+    push(exp(pop())); 
+   } else if (strcmp(s, "pow") == 0) {
+    op2 = pop();
+    push(pow(pop(), op2)); 
+  } else {
+    printf("error: unknown library command %s\n", s);
+  }
+}
+
+void get_full_op(char s[])
+{
+  int i = 0;
+  char c;
+  while((s[i++] = c  = getch()) != ' ' 
+      &&  c != '\t' 
+      && c != '\n'  
+      && c != '\0'
+      && c != EOF) {
+    ;
+  }
+  s[i - 1] = '\0';
+
+  if (c != EOF) {
+    ungetch(c);
+  }
+}
+
