@@ -1,6 +1,7 @@
 #! /bin/zsh
+
 echo "Test $1\n"
-clang -g -Wall -Wextra -Wpedantic $1.c -o $1.o &&./$1.o
+clang -g -Wall -Wextra -Wpedantic -lm $1.c -o $1.o &&./$1.o || exit 1
 
 mkfifo mypipe
 ./$1.o < mypipe &
@@ -10,6 +11,9 @@ echo "1 2 - 4 5 + *" > mypipe
 
 echo "1 2 *"
 echo "1 2 *" > mypipe
+
+echo "45 @sin"
+echo "45 @sin" > mypipe
 
 rm mypipe
 
