@@ -25,12 +25,19 @@ mkfifo mypipe
 # echo "2 3 @pow"
 # echo "2 3 @pow" > mypipe
 
-echo
-echo "4 a" > mypipe
-echo "p" > mypipe
-echo "3 b" > mypipe
-echo "c" > mypipe
-echo '$b $a @pow' > mypipe
+# echo "variables"
+# echo "4 a" > mypipe
+# echo "p" > mypipe
+# echo "3 b" > mypipe
+# echo "c" > mypipe
+# echo '$b $a @pow' > mypipe
+
+echo 'last variable'
+echo '4 3 *' > mypipe
+echo '$! 6 +' > mypipe
+
+echo 'last variable set fail'
+echo '4 !' > mypipe
 
 rm mypipe
 

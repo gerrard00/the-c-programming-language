@@ -17,6 +17,8 @@ void swap(void);
 void dump(void);
 void get_full_op(char s[]);
 void handle_library_function(char s[]);
+bool is_variable_name(char c);
+void set_last_variable(float val);
 void set_variable(char variable_name, float val);
 float get_variable(void);
 
@@ -57,6 +59,7 @@ int main()
       case '\n':
         printf("--------------\n");
         printf("\t%f\n", peek());
+        set_last_variable(peek());
         break;
       case 'p':
         printf("%f\n", peek());
@@ -83,7 +86,7 @@ int main()
         push(get_variable());
         break;
       default:
-        if (type >= 'a' && type <= 'z') {
+        if (is_variable_name(type)) {
           set_variable(type, pop());
         } else {
           printf("error: unknown command %s\n", s);
@@ -259,12 +262,17 @@ void handle_library_function(char s[])
 // create a global to hold our variable values, initialized to zeros
 #define NUMBER_OF_VARIABLES 26
 #define VARIABLE_NOT_FOUND -1
+#define LAST_VARIABLE_CHAR '!'
 float variables[NUMBER_OF_VARIABLES] = {0};
 float last_variable = 0;
 
-//TODO: support $$ as special last value seen
+bool is_variable_name(char c)
+{
+  return (c == LAST_VARIABLE_CHAR 
+      || (c >= 'a' && c <= 'z'));
+}
 
-int get_variable_index(char variable_name)
+int get_letter_variable_index(char variable_name)
 {
   if (variable_name >= 0 || variable_name < NUMBER_OF_VARIABLES) {
     return variable_name - '0';
@@ -277,10 +285,21 @@ int get_variable_index(char variable_name)
 void set_variable(char variable_name, float val)
 {
   int variable_index;
-  if ((variable_index = get_variable_index(variable_name))
+
+  if (variable_name == LAST_VARIABLE_CHAR) {
+    printf("$! variable cannot be set directly.\n");
+    return;
+  }
+
+  if ((variable_index = get_letter_variable_index(variable_name))
       != VARIABLE_NOT_FOUND) {
     variables[variable_index] = val;
   }
+}
+
+void set_last_variable(float val)
+{
+  last_variable = val;
 }
 
 float get_variable()
@@ -288,7 +307,11 @@ float get_variable()
   char variable_name = getch();
   int variable_index;
 
-  if ((variable_index = get_variable_index(variable_name))
+  if (variable_name == LAST_VARIABLE_CHAR) {
+    return last_variable;
+  }
+
+  if ((variable_index = get_letter_variable_index(variable_name))
       != VARIABLE_NOT_FOUND) {
     return variables[variable_index];
   }
