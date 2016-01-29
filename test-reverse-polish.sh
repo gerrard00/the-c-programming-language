@@ -1,45 +1,41 @@
-#! /bin/zsh
+#!/bin/zsh
 
-echo "Test reverse-polish\n"
+function run_commands () 
+{
+  echo
+  echo $1
+
+./reverse-polish.o <<HEREDOC
+$1
+HEREDOC
+}
+
+echo "Test reverse-polish"
 clang -g -Wall -Wextra -Wpedantic -lm reverse-polish.c -o reverse-polish.o &&./reverse-polish.o || exit 1
 
-mkfifo mypipe
-./reverse-polish.o < mypipe &
+run_commands "4 5 /"
 
-# echo "1 2 - 4 5 + *"
-# echo "1 2 - 4 5 + *" > mypipe
+run_commands "1 2 - 4 5 + *"
 
-# echo
-# echo "1 2 *"
-# echo "1 2 *" > mypipe
+run_commands "1 2 *"
 
-# echo
-# echo "45 @sin"
-# echo "45 @sin" > mypipe
+run_commands "45 @sin"
 
-# echo
-# echo "3 @exp"
-# echo "3 @exp" > mypipe
+run_commands "3 @exp"
 
-# echo
-# echo "2 3 @pow"
-# echo "2 3 @pow" > mypipe
+run_commands "2 3 @pow"
 
-# echo "variables"
-# echo "4 a" > mypipe
-# echo "p" > mypipe
-# echo "3 b" > mypipe
-# echo "c" > mypipe
-# echo '$b $a @pow' > mypipe
+echo "\nvariables"
+run_commands '4 a 3 b c $b $a @pow'
 
-echo 'last variable'
-echo '4 3 *' > mypipe
-echo '$! 6 +' > mypipe
+echo "\nlast variable"
+run_commands '4 3 * 
+$! 6 +'
 
-echo 'last variable set fail'
-echo '4 !' > mypipe
+echo "\nlast variable set fail"
+run_commands '4 !'
 
-rm mypipe
-
-echo
 echo "done!"
+
+
+
