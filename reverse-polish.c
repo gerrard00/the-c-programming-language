@@ -6,8 +6,11 @@
 
 #define MAXOP 100   /* max size of operand or operator */
 #define NUMBER '0'  /* signal that a number was found */
+#define SET_VARIABLE '1'  /* signal that a number was found */
+#define GET_VARIABLE '2'  /* signal that a number was found */
 
-int getop(char []);
+int getop(char s[]);
+int getnum(char s[]);
 void push(double);
 double pop(void);
 double peek(void);
@@ -20,7 +23,7 @@ void handle_library_function(char s[]);
 bool is_variable_name(char c);
 void set_last_variable(float val);
 void set_variable(char variable_name, float val);
-float get_variable(void);
+float get_variable(char variable_name);
 
 /* reverse Polish calculator */
 int main()
@@ -28,8 +31,14 @@ int main()
   int type;
   double op2;
   char s[MAXOP];
+  char last_s[MAXOP];
+  bool do_calculation;
 
   while ((type = getop(s)) != EOF) {
+    if (type != '\n') {
+      do_calculation = true;
+    }
+
     switch (type) {
       case NUMBER:
         push(atof(s));
@@ -50,16 +59,25 @@ int main()
           push(pop() / op2);
         } else {
           printf("error: zero divisor\n");
+          do_calculation = false;
         }
         break;
       case '%':
         op2 = pop();
-        push((int)pop() % (int)op2);
+        if (op2 != 0.0) {
+          push((int)pop() % (int)op2);
+        } else {
+          printf("error: zero divisor\n");
+          do_calculation = false;
+        }
         break;
       case '\n':
-        printf("--------------\n");
-        printf("\t%f\n", peek());
-        set_last_variable(peek());
+        if (do_calculation) {
+          printf("------------------\n");
+          printf("\t%f\n", peek());
+          printf("\n");
+          set_last_variable(peek());
+        }
         break;
       case 'p':
         printf("%f\n", peek());
@@ -70,7 +88,6 @@ int main()
         break;
       case 'c':
         clear();
-        printf("%f\n", 0.0);
         break;
       case 's':
         swap();
@@ -78,14 +95,17 @@ int main()
         break;
       case 'z':
         dump();
+        do_calculation = false;
         break;
       case '@':
+        //TODO: use a const return value from getop instead of hardcoding at sign?
         handle_library_function(s);
         break;
       case '$':
-        push(get_variable());
+        push(get_variable(s[1]));
         break;
       default:
+        do_calculation = false;
         if (is_variable_name(type)) {
           set_variable(type, pop());
         } else {
@@ -93,7 +113,13 @@ int main()
         }
         break;
     }
+
+    strcpy(last_s, s);
+    /* printf("!!!!!!!!!!!!!!!!!!%s\n", last_s); */
   }
+
+  /* printf("final type int: %d\n", type); */
+  /* printf("final type char: %c\n", type); */
   return 0;
 }
 
@@ -178,15 +204,58 @@ void ungetch(int);
 /* getop: get next operator or numeric operand */
 int getop(char s[])
 {
-  int i, c, next_c;
-
-  while((s[0] = c  = getch()) == ' ' || c == '\t') {
+  int c;
+  int result;
+  int i = 0;
+ 
+  /* printf("about to look for whitespace %d\n", sp); */
+  while((s[0] = c = getch()) == ' ' || c == '\t') {
+    /* printf("ping\n"); */
     ;
   }
   s[1] = '\0';
-  if (!isdigit(c) && c != '.' && c != '-') {
-    return c; /* not a number */
+
+  if (c == '\n' || c == EOF) {
+    return c;
+  } else if (isdigit(c) || c == '.' || c == '-') {
+    result = NUMBER;
+  } else {
+    result = c;
   }
+
+  while((s[++i] = c = getch()) != ' '
+      &&  c != '\t'
+      && c != '\n'
+      && c != '\0'
+      && c != EOF) {
+    ;
+  }
+  s[i] = '\0';
+
+  /* printf("c now int: %d\n", c); */
+  /* printf("c now char: %c\n", c); */
+  if (s[0] != c && (c == EOF || c == '\n')) {
+    ungetch(c);
+  }
+
+  /* if the first digit is a dash and there are no other chars,
+   * it's an operator and not a number. */
+  if (result == NUMBER && s[0] == '-' && i == 1) {
+    // what we have here is a subtraction operator
+    result = s[0];
+  }
+
+  /* printf("string: <<--%s-->>\n", s); */
+  /* printf("result int: %d\n", result); */
+  /* printf("result char: %c\n", result); */
+
+  return result;
+}
+
+int getnum(char s[]) 
+{
+  int i, c, next_c;
+  c = s[0];
   i = 0;
   /* collect negative sign, if present */
   if (c == '-') {
@@ -233,8 +302,10 @@ int getch(void)
 }
 
 /* push character back on input */
+//TODO: shouldn't this be char?
 void ungetch(int c)
 {
+  /* printf("ungetch as int: %d\n", c); */
   if (bufp >= BUFSIZE) {
     printf("ungetch: too many characters\n");
   } else {
@@ -245,13 +316,12 @@ void ungetch(int c)
 void handle_library_function(char s[])
 {
   float op2;
-  get_full_op(s);
 
-  if (strcmp(s, "sin") == 0) {
+  if (strcmp(s, "@sin") == 0) {
     push(sin(pop()));
-  } else if (strcmp(s, "exp") == 0) {
+  } else if (strcmp(s, "@exp") == 0) {
     push(exp(pop()));
-   } else if (strcmp(s, "pow") == 0) {
+   } else if (strcmp(s, "@pow") == 0) {
     op2 = pop();
     push(pow(pop(), op2));
   } else {
@@ -269,13 +339,13 @@ float last_variable = 0;
 bool is_variable_name(char c)
 {
   return (c == LAST_VARIABLE_CHAR 
-      || (c >= 'a' && c <= 'z'));
+      || (c >= 'A' && c <= 'Z'));
 }
 
 int get_letter_variable_index(char variable_name)
 {
   if (variable_name >= 0 || variable_name < NUMBER_OF_VARIABLES) {
-    return variable_name - '0';
+    return variable_name - 'A';
   } else {
     printf("Unknown variable %c\n", variable_name);
     return VARIABLE_NOT_FOUND;
@@ -294,6 +364,8 @@ void set_variable(char variable_name, float val)
   if ((variable_index = get_letter_variable_index(variable_name))
       != VARIABLE_NOT_FOUND) {
     variables[variable_index] = val;
+  } else {
+    printf("Unknown variable %c\n", variable_name);
   }
 }
 
@@ -302,9 +374,8 @@ void set_last_variable(float val)
   last_variable = val;
 }
 
-float get_variable()
+float get_variable(char variable_name)
 {
-  char variable_name = getch();
   int variable_index;
 
   if (variable_name == LAST_VARIABLE_CHAR) {
@@ -322,7 +393,7 @@ void get_full_op(char s[])
 {
   int i = 0;
   char c;
-  while((s[i++] = c  = getch()) != ' '
+  while((s[i++] = c = getch()) != ' '
       &&  c != '\t'
       && c != '\n'
       && c != '\0'
@@ -335,4 +406,17 @@ void get_full_op(char s[])
     ungetch(c);
   }
 }
+/*
+Exercise 4-7. Write a routine ungets(s) that will push back an entire string
+onto the input. Should ungets know about buf and bufp, or should it just
+use ungetch?
+*/
+void ungets(char s[])
+{
+  // testing doing it w/ while and w/o strlen
+  int i = 0;
 
+  while(s[i] != '\0') {
+    ungetch(s[i]);
+  }
+}
