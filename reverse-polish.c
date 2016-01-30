@@ -25,7 +25,6 @@ bool is_variable_name(char c);
 void set_last_variable(float val);
 void set_variable(char variable_name, float val);
 float get_variable(char variable_name);
-void ungets(char s[]);
 
 /* reverse Polish calculator */
 int main()
@@ -33,9 +32,7 @@ int main()
   int type;
   double op2;
   char s[MAXOP];
-  char last_s[MAXOP];
   bool do_calculation;
-  int last_s_len;
 
   while ((type = getop(s)) != EOF) {
     /* printf("type: %c\n", type); */
@@ -106,15 +103,6 @@ int main()
         //TODO: use a const return value from getop instead of hardcoding at sign?
         handle_library_function(s);
         break;
-       case ':':
-        /* I don't know how I'm supposed to expose ungets, so... */
-        // have to add a space at the end so it's not against any possible
-        // following chars
-        last_s_len = strlen(last_s);
-        last_s[last_s_len] = ' ';
-        last_s[last_s_len + 1] = '\0';
-        ungets(last_s);
-        break;
       case '$':
         push(get_variable(s[1]));
         break;
@@ -127,9 +115,6 @@ int main()
         }
         break;
     }
-
-    strcpy(last_s, s);
-    /* printf("!!!!!!!!!!!!!!!!!!%s\n", last_s); */
   }
 
   /* printf("final type int: %d\n", type); */
@@ -306,25 +291,28 @@ int getnum(char s[])
 
 #define BUFSIZE 100
 
-char buf[BUFSIZE]; /* buffer for ungetch */
-int bufp = 0; /* next free position in buf */
+char last_char = '\0';
 
 /* get a (possibly pushed back) character */
 int getch(void)
 {
-  return (bufp > 0) ? buf[--bufp] : getchar();
+  char result;
+
+  if (last_char != '\0') {
+    result = last_char;
+    last_char = '\0';
+  } else {
+    result = getchar();
+  }
+
+  return result;
 }
 
 /* push character back on input */
 //TODO: shouldn't this be char?
 void ungetch(int c)
 {
-  /* printf("ungetch as int: %d\n", c); */
-  if (bufp >= BUFSIZE) {
-    printf("ungetch: too many characters\n");
-  } else {
-    buf[bufp++] = c;
-  }
+  last_char = c;
 }
 
 void handle_library_function(char s[])
@@ -417,20 +405,6 @@ void get_full_op(char s[])
   s[i - 1] = '\0';
 
   if (c != EOF) {
-    ungetch(c);
-  }
-}
-/*
-Exercise 4-7. Write a routine ungets(s) that will push back an entire string
-onto the input. Should ungets know about buf and bufp, or should it just
-use ungetch?
-*/
-void ungets(char s[])
-{
-  char c;
-  int i = 0;
-
-  while((c = s[i++]) != '\0') {
     ungetch(c);
   }
 }

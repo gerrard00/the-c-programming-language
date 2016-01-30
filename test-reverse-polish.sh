@@ -7,7 +7,7 @@ function run_commands ()
 
   ./reverse-polish.o <<< "$1"
 
-  echo "********"
+  echo "________________________________"
 }
 
 echo "Test reverse-polish"
@@ -39,9 +39,6 @@ $! 6 +'
 
 echo "\nlast variable set fail"
 run_commands '4 !'
-
-echo "\nungets"
-run_commands '4 : *'
 
 echo "done!"
 
