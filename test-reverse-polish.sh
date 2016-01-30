@@ -40,6 +40,9 @@ $! 6 +'
 echo "\nlast variable set fail"
 run_commands '4 !'
 
+echo "\nungets"
+run_commands '4 : *'
+
 echo "done!"
 
 

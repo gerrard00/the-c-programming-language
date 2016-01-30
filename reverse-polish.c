@@ -18,12 +18,14 @@ void dupe(void);
 void clear(void);
 void swap(void);
 void dump(void);
+//TODO: remove this, unused method
 void get_full_op(char s[]);
 void handle_library_function(char s[]);
 bool is_variable_name(char c);
 void set_last_variable(float val);
 void set_variable(char variable_name, float val);
 float get_variable(char variable_name);
+void ungets(char s[]);
 
 /* reverse Polish calculator */
 int main()
@@ -33,8 +35,11 @@ int main()
   char s[MAXOP];
   char last_s[MAXOP];
   bool do_calculation;
+  int last_s_len;
 
   while ((type = getop(s)) != EOF) {
+    /* printf("type: %c\n", type); */
+    /* printf("string: %s\n", s); */
     if (type != '\n') {
       do_calculation = true;
     }
@@ -100,6 +105,15 @@ int main()
       case '@':
         //TODO: use a const return value from getop instead of hardcoding at sign?
         handle_library_function(s);
+        break;
+       case ':':
+        /* I don't know how I'm supposed to expose ungets, so... */
+        // have to add a space at the end so it's not against any possible
+        // following chars
+        last_s_len = strlen(last_s);
+        last_s[last_s_len] = ' ';
+        last_s[last_s_len + 1] = '\0';
+        ungets(last_s);
         break;
       case '$':
         push(get_variable(s[1]));
@@ -234,7 +248,7 @@ int getop(char s[])
 
   /* printf("c now int: %d\n", c); */
   /* printf("c now char: %c\n", c); */
-  if (s[0] != c && (c == EOF || c == '\n')) {
+  if (s[0] != c) {
     ungetch(c);
   }
 
@@ -413,10 +427,10 @@ use ungetch?
 */
 void ungets(char s[])
 {
-  // testing doing it w/ while and w/o strlen
+  char c;
   int i = 0;
 
-  while(s[i] != '\0') {
-    ungetch(s[i]);
+  while((c = s[i++]) != '\0') {
+    ungetch(c);
   }
 }
