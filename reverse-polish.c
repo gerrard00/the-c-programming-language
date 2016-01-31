@@ -6,8 +6,7 @@
 
 #define MAXOP 100   /* max size of operand or operator */
 #define NUMBER '0'  /* signal that a number was found */
-#define SET_VARIABLE '1'  /* signal that a number was found */
-#define GET_VARIABLE '2'  /* signal that a number was found */
+#define GET_VARIABLE '$'  /* signal that a get var was found */
 
 int getop(char s[]);
 int getnum(char s[]);
@@ -103,7 +102,7 @@ int main()
         //TODO: use a const return value from getop instead of hardcoding at sign?
         handle_library_function(s);
         break;
-      case '$':
+      case GET_VARIABLE:
         push(get_variable(s[1]));
         break;
       default:
