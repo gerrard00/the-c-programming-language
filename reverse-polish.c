@@ -4,12 +4,14 @@
 #include <string.h>
 #include <stdbool.h>
 
+#define MAXLINE 1000   /* max size of line */
 #define MAXOP 100   /* max size of operand or operator */
 #define NUMBER '0'  /* signal that a number was found */
 #define GET_VARIABLE '$'  /* signal that a get var was found */
+#define COMMAND '@'  /* signal that a command was found */
 
-int getop(char s[]);
-int getnum(char s[]);
+int my_getline(char s[], int lim);
+int getop(char line[], int *start_index, char s[]);
 void push(double);
 double pop(void);
 double peek(void);
@@ -17,8 +19,6 @@ void dupe(void);
 void clear(void);
 void swap(void);
 void dump(void);
-//TODO: remove this, unused method
-void get_full_op(char s[]);
 void handle_library_function(char s[]);
 bool is_variable_name(char c);
 void set_last_variable(float val);
@@ -30,92 +30,100 @@ int main()
 {
   int type;
   double op2;
+  int line_length;
+  int line_index;
+  char line[MAXLINE];
   char s[MAXOP];
   bool do_calculation;
 
-  while ((type = getop(s)) != EOF) {
-    /* printf("type: %c\n", type); */
-    /* printf("string: %s\n", s); */
-    if (type != '\n') {
-      do_calculation = true;
+  while((line_length = my_getline(line, MAXLINE)) > 0) {
+    line_index = 0;
+  
+    while ((type = getop(line, &line_index, s)) != EOF
+        && line_index <= line_length) {
+      /* printf("type: %c\n", type); */
+      /* printf("string: %s\n", s); */
+      if (type != '\n') {
+        do_calculation = true;
+      }
+
+      switch (type) {
+        case NUMBER:
+          push(atof(s));
+          break;
+        case '+':
+          push(pop() + pop());
+          break;
+        case '*':
+          push(pop() * pop());
+          break;
+        case '-':
+          op2 = pop();
+          push(pop() - op2);
+          break;
+        case '/':
+          op2 = pop();
+          if (op2 != 0.0) {
+            push(pop() / op2);
+          } else {
+            printf("error: zero divisor\n");
+            do_calculation = false;
+          }
+          break;
+        case '%':
+          op2 = pop();
+          if (op2 != 0.0) {
+            push((int)pop() % (int)op2);
+          } else {
+            printf("error: zero divisor\n");
+            do_calculation = false;
+          }
+          break;
+        case '\n':
+          if (do_calculation) {
+            printf("------------------\n");
+            printf("\t%f\n", peek());
+            printf("\n");
+            set_last_variable(peek());
+          }
+          break;
+        case 'p':
+          printf("%f\n", peek());
+          break;
+        case 'd':
+          dupe();
+          printf("%f\n", peek());
+          break;
+        case 'c':
+          clear();
+          break;
+        case 's':
+          swap();
+          printf("%f\n", peek());
+          break;
+        case 'z':
+          dump();
+          do_calculation = false;
+          break;
+        case COMMAND:
+          //TODO: use a const return value from getop instead of hardcoding at sign?
+          handle_library_function(s);
+          break;
+        case GET_VARIABLE:
+          push(get_variable(s[1]));
+          break;
+        default:
+          do_calculation = false;
+          if (is_variable_name(type)) {
+            set_variable(type, pop());
+          } else {
+            printf("error: unknown command %s\n", s);
+          }
+          break;
+      }
     }
 
-    switch (type) {
-      case NUMBER:
-        push(atof(s));
-        break;
-      case '+':
-        push(pop() + pop());
-        break;
-      case '*':
-        push(pop() * pop());
-        break;
-      case '-':
-        op2 = pop();
-        push(pop() - op2);
-        break;
-      case '/':
-        op2 = pop();
-        if (op2 != 0.0) {
-          push(pop() / op2);
-        } else {
-          printf("error: zero divisor\n");
-          do_calculation = false;
-        }
-        break;
-      case '%':
-        op2 = pop();
-        if (op2 != 0.0) {
-          push((int)pop() % (int)op2);
-        } else {
-          printf("error: zero divisor\n");
-          do_calculation = false;
-        }
-        break;
-      case '\n':
-        if (do_calculation) {
-          printf("------------------\n");
-          printf("\t%f\n", peek());
-          printf("\n");
-          set_last_variable(peek());
-        }
-        break;
-      case 'p':
-        printf("%f\n", peek());
-        break;
-      case 'd':
-        dupe();
-        printf("%f\n", peek());
-        break;
-      case 'c':
-        clear();
-        break;
-      case 's':
-        swap();
-        printf("%f\n", peek());
-        break;
-      case 'z':
-        dump();
-        do_calculation = false;
-        break;
-      case '@':
-        //TODO: use a const return value from getop instead of hardcoding at sign?
-        handle_library_function(s);
-        break;
-      case GET_VARIABLE:
-        push(get_variable(s[1]));
-        break;
-      default:
-        do_calculation = false;
-        if (is_variable_name(type)) {
-          set_variable(type, pop());
-        } else {
-          printf("error: unknown command %s\n", s);
-        }
-        break;
-    }
   }
-
   /* printf("final type int: %d\n", type); */
   /* printf("final type char: %c\n", type); */
   return 0;
@@ -194,20 +202,18 @@ void dump(void)
   printf("<<<<\\dump>>>\n");
 }
 
+// needed for isdigit
 #include <ctype.h>
 
-int getch(void);
-void ungetch(int);
-
 /* getop: get next operator or numeric operand */
-int getop(char s[])
+int getop(char line[], int *start_index, char s[])
 {
   int c;
   int result;
   int i = 0;
  
   /* printf("about to look for whitespace %d\n", sp); */
-  while((s[0] = c = getch()) == ' ' || c == '\t') {
+  while((s[0] = c = line[(*start_index)++]) == ' ' || c == '\t') {
     /* printf("ping\n"); */
     ;
   }
@@ -221,7 +227,7 @@ int getop(char s[])
     result = c;
   }
 
-  while((s[++i] = c = getch()) != ' '
+  while((s[++i] = c = line[(*start_index)++]) != ' '
       &&  c != '\t'
       && c != '\n'
       && c != '\0'
@@ -233,7 +239,7 @@ int getop(char s[])
   /* printf("c now int: %d\n", c); */
   /* printf("c now char: %c\n", c); */
   if (s[0] != c) {
-    ungetch(c);
+    (*start_index)--;
   }
 
   /* if the first digit is a dash and there are no other chars,
@@ -248,70 +254,6 @@ int getop(char s[])
   /* printf("result char: %c\n", result); */
 
   return result;
-}
-
-int getnum(char s[]) 
-{
-  int i, c, next_c;
-  c = s[0];
-  i = 0;
-  /* collect negative sign, if present */
-  if (c == '-') {
-    /* could be a subtract operator or a negative sign */
-    next_c = getch();
-
-    if (!isdigit(next_c)) {
-      /* it's a subtract operator */
-      ungetch(next_c);
-      return c;
-    }
-
-    /* it's a negative sign */
-    c = s[++i] = next_c;
-  }
-  /* collect integer part */
-  if(isdigit(c)) {
-    while (isdigit(s[++i] = c = getch())) {
-      ;
-    }
-  }
-  /* collect fraction part */
-  if (c == '.')  {
-    while(isdigit(s[++i] = c = getch())) {
-      ;
-    }
-  }
-  s[i] = '\0';
-  if(c != EOF) {
-    ungetch(c);
-  }
-  return NUMBER;
-}
-
-#define BUFSIZE 100
-
-char last_char = '\0';
-
-/* get a (possibly pushed back) character */
-int getch(void)
-{
-  char result;
-
-  if (last_char != '\0') {
-    result = last_char;
-    last_char = '\0';
-  } else {
-    result = getchar();
-  }
-
-  return result;
-}
-
-/* push character back on input */
-//TODO: shouldn't this be char?
-void ungetch(int c)
-{
-  last_char = c;
 }
 
 void handle_library_function(char s[])
@@ -390,20 +332,17 @@ float get_variable(char variable_name)
   return 0.0;
 }
 
-void get_full_op(char s[])
+/* my_getline:get line into s, return length */
+int my_getline(char s[], int lim)
 {
-  int i = 0;
-  char c;
-  while((s[i++] = c = getch()) != ' '
-      &&  c != '\t'
-      && c != '\n'
-      && c != '\0'
-      && c != EOF) {
-    ;
-  }
-  s[i - 1] = '\0';
+	int c, i;
 
-  if (c != EOF) {
-    ungetch(c);
-  }
+	i=0;
+	while(--lim > 0 && (c=getchar()) != EOF && c != '\n') {
+		s[i++] = c;
+	}
+	if(c =='\n' )
+		s[i++] = c;
+	s[i]='\0';
+	return i;
 }
