@@ -101,8 +101,50 @@ void test_strcatn()
   printf("after (%d):\t\"%s\"\n", n, result);
 }
 
+int my_strcmp(const char *s, const char *t, int n)
+{
+  int i;
+
+  /* printf("%s\t%s\t%d\n", s, t, n); */
+  /* printf("initial %c\t%c\n", *s, *t); */
+
+  for(i = 0; i < n && (*s++ == *t++); i++) {
+    /* printf("%d: %c\n", i, *(s - 1)); */
+    ;
+  }
+
+  /* printf("final i: %d\n", i); */
+  if(i == n) {
+    return 0;
+  } else {
+    /* printf("\t%c\t %c\n", *s, *t); */
+    return *(s - 1) - *(t - 1);
+  }
+}
+
+void test_strcmp()
+{
+  int result;
+
+  result = my_strcmp("Mick", "Mick", 4);
+  printf("same: %d\n", result);
+
+  result = my_strcmp("Keith", "keith", 5);
+  printf("different: %d\n", result);
+
+  result = my_strcmp("Bill", "Bird", 2);
+  printf("same enough: %d\n", result);
+
+  result = my_strcmp("Bill", "Bird", 4);
+  printf("not same enough: %d\n", result);
+
+  result = my_strcmp("Mick", "Mike", 10);
+  printf("really not same enough: %d\n", result);
+}
+
 int main() 
 {
   /* test_strncpy(); */
-  test_strcatn();
+  /* test_strcatn(); */
+  test_strcmp();
 }
