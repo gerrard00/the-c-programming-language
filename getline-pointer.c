@@ -4,10 +4,11 @@
 
 int my_getline(char s[], int lim);
 
-int main() 
+int main()
 {
+  printf("running\n");
   char s[MAXLINE];
- 
+
   while(my_getline(s, MAXLINE)) {
     printf("->%s\n", s);
   }
@@ -20,7 +21,7 @@ int my_getline(char *s, int lim)
 
 	i=0;
 	while(--lim > 0 && (c=getchar()) != EOF && c != '\n') {
-	  *s++ = c;
+    *s++ = c;
 	}
 	if(c =='\n' )
 		*s++ = c;
