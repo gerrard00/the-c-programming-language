@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <ctype.h>
 
 #define MAXLINES 5000
 char *lineptr[MAXLINES];
@@ -17,21 +18,30 @@ void my_qsort(void *lineptr[], int left, int right,
 
 int numcmp(const char *, const char*);
 
-/* don't really need an iterator, just having fun */
-bool iterate(int number_of_items, int *next);
-bool iterate_rev(int number_of_items, int *next);
-
 /* 
 Exercise 5-14. Modify the sort program to handle a -r flag, 
 which indicates sorting in reverse (decreasing) order. Be sure 
 that -r works with -n.
 */
+/* don't really need an iterator, just having fun */
+bool iterate(int number_of_items, int *next);
+bool iterate_rev(int number_of_items, int *next);
+
+/*
+Exercise 5-15. Add the option -f to fold upper and lowercase together, 
+so that case distinctions are not made during sorting; for example,
+a and A compare equal.
+*/
+int strcmp_ignore_case(char *s1, char *s2);
 
 /* sort input lines */
 int main(int argc, char *argv[])
 {
   int nlines; /* number of input lines */
-  bool numeric, reverse_order;
+  bool numeric, reverse_order, ignore_case;
+  int (*comparer)(void*, void*);
+
+  numeric = reverse_order = ignore_case = false;
 
   /* note: we don't support collapsing args like -nr */
   for(int arg_index = 1; arg_index < argc; arg_index++) {
@@ -39,12 +49,26 @@ int main(int argc, char *argv[])
       numeric = true;
     } else if (strcmp(argv[arg_index], "-r") == 0) {
       reverse_order = true;
+    } else if (strcmp(argv[arg_index], "-f") == 0) {
+      ignore_case = true;
     }
   }
 
+  if (numeric && ignore_case) {
+    printf("You cannot specify both -n and -f\n");
+    return 2;
+  }
+
+  if (numeric) {
+    comparer = (int (*)(void*, void*))numcmp;
+  } else if (ignore_case) {
+    comparer = (int (*)(void*, void*))strcmp_ignore_case;
+  } else {
+    comparer = (int (*)(void*, void*))strcmp;
+  }
+
   if((nlines = readlines(lineptr, MAXLINES)) >= 0) {
-    my_qsort((void*)lineptr, 0, nlines-1, 
-        (int (*)(void*, void*))(numeric ? numcmp : strcmp));
+    my_qsort((void*)lineptr, 0, nlines-1, comparer);
     writelines(lineptr, nlines, (reverse_order ? iterate_rev : iterate));
     return 0;
   } else {
@@ -165,6 +189,17 @@ int numcmp(const char *s1, const char *s2)
   } else {
     return 0;
   }
+}
+
+int strcmp_ignore_case(char *s1, char *s2)
+{
+  char c1, c2;
+
+  while(*s1 != '\0' && *s2 != '\0' 
+      && (c1 = tolower(*s1++)) == (c2 = tolower(*s2++))) {
+    ;
+  }
+  return c1 - c2;
 }
 
 static int current_index = 0;

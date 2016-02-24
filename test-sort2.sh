@@ -58,3 +58,29 @@ echo "**********"
 495
 zzz
 
+echo "\n**********"
+echo "case sensitive"
+echo "**********"
+
+./$program.o <<-zzz 
+aaaaaaaaaddd
+aaa
+bbb
+AAA
+BBB
+ccc
+zzz
+
+echo "\n**********"
+echo "case insensitive"
+echo "**********"
+
+./$program.o -f <<-zzz 
+aaaaaaaaaddd
+aaa
+bbb
+AAA
+BBB
+ccc
+zzz
+
