@@ -84,3 +84,54 @@ BBB
 ccc
 zzz
 
+echo "\n**********"
+echo "without directory"
+echo "**********"
+
+./$program.o <<-zzz 
+AAABBBCCC
+aaa/bbb/ccc
+aaa/ddd/eee
+aaabbbccc
+AAA/BBB/CCC
+AAA/DDD/EEE
+zzz
+
+echo "\n**********"
+echo "numeric and directory fail"
+echo "**********"
+
+./$program.o -n -d <<-zzz 
+AAABBBCCC
+aaa/bbb/ccc
+aaa/ddd/eee
+aaabbbccc
+AAA/BBB/CCC
+AAA/DDD/EEE
+zzz
+echo "\n**********"
+echo "case sensitive directory"
+echo "**********"
+
+./$program.o -d <<-zzz 
+AAABBBCCC
+aaa/bbb/ccc
+aaa/ddd/eee
+aaabbbccc
+AAA/BBB/CCC
+AAA/DDD/EEE
+zzz
+
+echo "\n**********"
+echo "case insensitive directory"
+echo "**********"
+
+./$program.o -f -d <<-zzz 
+AAABBBCCC
+aaa/bbb/ccc
+aaa/ddd/eee
+aaabbbccc
+AAA/BBB/CCC
+AAA/DDD/EEE
+zzz
+

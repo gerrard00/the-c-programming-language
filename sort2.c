@@ -4,11 +4,12 @@
 #include <stdlib.h>
 #include <ctype.h>
 
+#define MAXLEN 1000
 #define MAXLINES 5000
 char *lineptr[MAXLINES];
 
 int readlines(char *lineptr[], int nlines);
-void writelines(char *lineptr[], int nlines, 
+void writelines(char *lineptr[], int nlines,
     bool (*iter)(int, int *));
 
 /* have to call it my_qsort because there is a qsort
@@ -18,9 +19,9 @@ void my_qsort(void *lineptr[], int left, int right,
 
 int numcmp(const char *, const char*);
 
-/* 
-Exercise 5-14. Modify the sort program to handle a -r flag, 
-which indicates sorting in reverse (decreasing) order. Be sure 
+/*
+Exercise 5-14. Modify the sort program to handle a -r flag,
+which indicates sorting in reverse (decreasing) order. Be sure
 that -r works with -n.
 */
 /* don't really need an iterator, just having fun */
@@ -28,20 +29,33 @@ bool iterate(int number_of_items, int *next);
 bool iterate_rev(int number_of_items, int *next);
 
 /*
-Exercise 5-15. Add the option -f to fold upper and lowercase together, 
+Exercise 5-15. Add the option -f to fold upper and lowercase together,
 so that case distinctions are not made during sorting; for example,
 a and A compare equal.
 */
 int strcmp_ignore_case(char *s1, char *s2);
 
+/*
+Exercise 5-16. Add the -d ("directory order") option, which makes
+comparisons only on letters, numbers and blanks. Make sure it works in
+conjunction with- f.
+*/
+/* support nested comparers (e.g. strcmp_directory) that modify the
+ * input string before calling inner_comparer to do the actual
+ * comparison 
+*/
+static char modified1[MAXLEN], modified2[MAXLEN];
+static int (*inner_comparer)(void *, void *);
+int strcmp_directory(char *s1, char *s2);
+
 /* sort input lines */
 int main(int argc, char *argv[])
 {
   int nlines; /* number of input lines */
-  bool numeric, reverse_order, ignore_case;
+  bool numeric, reverse_order, ignore_case, directory_order;
   int (*comparer)(void*, void*);
 
-  numeric = reverse_order = ignore_case = false;
+  numeric = reverse_order = ignore_case = directory_order = false;
 
   /* note: we don't support collapsing args like -nr */
   for(int arg_index = 1; arg_index < argc; arg_index++) {
@@ -51,6 +65,8 @@ int main(int argc, char *argv[])
       reverse_order = true;
     } else if (strcmp(argv[arg_index], "-f") == 0) {
       ignore_case = true;
+    } else if (strcmp(argv[arg_index], "-d") == 0) {
+      directory_order = true;
     }
   }
 
@@ -59,6 +75,12 @@ int main(int argc, char *argv[])
     return 2;
   }
 
+  if (numeric && directory_order) {
+    printf("You cannot specify both -n and -d\n");
+    return 3;
+  }
+
+  // determine primary comparer
   if (numeric) {
     comparer = (int (*)(void*, void*))numcmp;
   } else if (ignore_case) {
@@ -66,6 +88,14 @@ int main(int argc, char *argv[])
   } else {
     comparer = (int (*)(void*, void*))strcmp;
   }
+
+  // TODO: user can't specify numeric and directory_order
+  // see if we need a wrapper comparer
+  if (directory_order) {
+    inner_comparer = comparer;
+    comparer = (int (*)(void*, void*))strcmp_directory;
+  }
+
 
   if((nlines = readlines(lineptr, MAXLINES)) >= 0) {
     my_qsort((void*)lineptr, 0, nlines-1, comparer);
@@ -77,7 +107,6 @@ int main(int argc, char *argv[])
   }
 }
 
-#define MAXLEN 1000
 int my_getline(char *, int);
 char *alloc(int);
 
@@ -143,7 +172,7 @@ char *alloc(int n) // Return pointer to n characters
 }
 
 /* my_qsort: sort v[left]...v[right] into increasing order */
-void my_qsort(void *v[], int left, int right, 
+void my_qsort(void *v[], int left, int right,
     int (*comp)(void *, void *))
 {
   int i, last;
@@ -191,11 +220,38 @@ int numcmp(const char *s1, const char *s2)
   }
 }
 
+void copy_directory_chars(char *from, char *to)
+{
+  while(*from != '\0') {
+    // filter anything but letters, numbers and blanks
+    if (isdigit(*from) 
+        || *from == ' '
+        || (*from >=  'a' && *from <= 'z') 
+        || (*from >=  'A' && *from <= 'Z')) {
+
+      *to++ = *from;
+    }
+
+    from++;
+  }
+}
+
+int strcmp_directory(char *s1, char *s2)
+{
+  char *s1mod = modified1;
+  char *s2mod = modified2;
+
+  copy_directory_chars(s1, s1mod);
+  copy_directory_chars(s2, s2mod);
+
+  return (*inner_comparer)(modified1, modified2);
+}
+
 int strcmp_ignore_case(char *s1, char *s2)
 {
   char c1, c2;
 
-  while(*s1 != '\0' && *s2 != '\0' 
+  while(*s1 != '\0' && *s2 != '\0'
       && (c1 = tolower(*s1++)) == (c2 = tolower(*s2++))) {
     ;
   }
@@ -205,12 +261,12 @@ int strcmp_ignore_case(char *s1, char *s2)
 static int current_index = 0;
 static int current_rev_index = 0;
 
-void clear_iterate() 
+void clear_iterate()
 {
   current_index = 0;
 }
 
-void clear_iterate_rev() 
+void clear_iterate_rev()
 {
   current_rev_index = 0;
 }
