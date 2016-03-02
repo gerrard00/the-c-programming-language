@@ -11,13 +11,14 @@
 char *lineptr[MAXLINES];
 
 int readlines(char *lineptr[], int nlines);
-void writelines(char *lineptr[], int nlines,
-    bool (*iter)(int, int *));
+//TODO: the iterator can't be passed to readline, since we support distinct orders by field
+void writelines(char *lineptr[], int nlines);
 
 /* have to call it my_qsort because there is a qsort
  * in the stdlib. probabaly wasn't there in c99 era */
 void my_qsort(void *lineptr[], int left, int right,
-    int (*comp)(void *, void *));
+    int (*comparer)(void *, void *),
+    bool (*orderer)(int));
 
 int numcmp(const char *, const char*);
 
@@ -26,9 +27,10 @@ Exercise 5-14. Modify the sort program to handle a -r flag,
 which indicates sorting in reverse (decreasing) order. Be sure
 that -r works with -n.
 */
-/* don't really need an iterator, just having fun */
-bool iterate(int number_of_items, int *next);
-bool iterate_rev(int number_of_items, int *next);
+// sort order forward
+bool order_forward(int input);
+// sort order reverse
+bool order_reverse(int input);
 
 /*
 Exercise 5-15. Add the option -f to fold upper and lowercase together,
@@ -47,17 +49,18 @@ conjunction with- f.
  * comparison
 */
 static char modified1[MAXLEN], modified2[MAXLEN];
+//TODO: this implementation using inner comparer is dumb and won't work for multiple. Add concept of tranformer.
 static int (*inner_comparer)(void *, void *);
 int strcmp_directory(char *s1, char *s2);
 
-int get_comparer_and_iterator(char *argument, 
+int get_comparer_and_orderer(char *argument,
   int (**comparer)(void *, void *),
-  bool (**iterator)(int, int *));
+  bool (**order)(int));
 
 /*
-Exercise 5-17. Add a field-handling capability, so sorting may be done 
-on fields within lines, each field sorted according to an independent 
-set of options. (The index for this book was sorted with -df for the 
+Exercise 5-17. Add a field-handling capability, so sorting may be done
+on fields within lines, each field sorted according to an independent
+set of options. (The index for this book was sorted with -df for the
 index category and -n for the page numbers.
 */
 //TODO: support an array of comparers, instead of the current local scalar var in main
@@ -66,23 +69,23 @@ int main(int argc, char *argv[])
 {
   int nlines; /* number of input lines */
   int (*comparers[])(void*, void*) = {0};
-  bool (*iterators[])(int, int *) = {0};
+  bool (*orderers[])(int) = {0};
 
   if (argc == 1) {
     comparers[0] = (int (*)(void*, void*))strcmp;
-    iterators[0] = iterate;
+    orderers[0] = order_forward;
   } else {
     for(int arg_index = 1; arg_index < argc; arg_index++) {
       // -1 for index of pointer arrays, since we start from
       // arg 1
-      get_comparer_and_iterator(argv[arg_index], 
-        &comparers[arg_index-1], &iterators[arg_index-1]);
+      get_comparer_and_orderer(argv[arg_index],
+        &comparers[arg_index-1], &orderers[arg_index-1]);
     }
   }
- 
+
   if((nlines = readlines(lineptr, MAXLINES)) >= 0) {
-    my_qsort((void*)lineptr, 0, nlines-1, comparers[0]);
-    writelines(lineptr, nlines, iterators[0]);
+    my_qsort((void*)lineptr, 0, nlines-1, comparers[0], orderers[0]);
+    writelines(lineptr, nlines);
     return 0;
   } else {
     printf("error: input too big to sort\n");
@@ -90,9 +93,9 @@ int main(int argc, char *argv[])
   }
 }
 
-int get_comparer_and_iterator(char *argument,
+int get_comparer_and_orderer(char *argument,
   int (**comparer)(void *, void *),
-  bool (**iterator)(int, int *))
+  bool (**iterator)(int))
 {
   char current_argument_char;
   bool numeric, reverse_order, ignore_case, directory_order;
@@ -142,7 +145,7 @@ int get_comparer_and_iterator(char *argument,
   } else if (ignore_case) {
     *comparer = (int (*)(void*, void*))strcmp_ignore_case;
   } else {
-    //use default comparer if no args were specified 
+    //use default comparer if no args were specified
     *comparer = (int (*)(void*, void*))strcmp;
   }
 
@@ -152,7 +155,7 @@ int get_comparer_and_iterator(char *argument,
     *comparer = (int (*)(void*, void*))strcmp_directory;
   }
 
-  *iterator = (reverse_order ? iterate_rev : iterate);
+  *iterator = (reverse_order ? order_reverse : order_forward);
 
   return 0;
 }
@@ -181,12 +184,10 @@ int readlines(char *lineptr[], int maxlines)
 }
 
 /* writelines: write output lines */
-void writelines(char *lineptr[], int nlines, bool (*iter)(int, int *))
+void writelines(char *lineptr[], int nlines)
 {
-  int index_to_write;
-
-  while(iter(nlines, &index_to_write)) {
-    printf("-> %s\n", lineptr[index_to_write]);
+  for(int i = 0; i < nlines; i++) {
+    printf("-> %s\n", lineptr[i]);
   }
 }
 
@@ -223,7 +224,8 @@ char *alloc(int n) // Return pointer to n characters
 
 /* my_qsort: sort v[left]...v[right] into increasing order */
 void my_qsort(void *v[], int left, int right,
-    int (*comp)(void *, void *))
+    int (*comparer)(void *, void *),
+    bool (*orderer)(int))
 {
   int i, last;
   void swap(void *v[], int i, int j);
@@ -234,13 +236,14 @@ void my_qsort(void *v[], int left, int right,
   swap(v, left, (left + right)/2);
   last = left;
   for(i = left+1; i <= right; i++) {
-    if((*comp)(v[i], v[left]) < 0) {
+    int x = (*comparer)(v[i], v[left]);
+    if((*orderer)(x)) {
       swap(v, ++last, i);
     }
   }
   swap(v, left, last);
-  my_qsort(v, left, last - 1, comp);
-  my_qsort(v, last+1, right, comp);
+  my_qsort(v, left, last - 1, comparer, orderer);
+  my_qsort(v, last+1, right, comparer, orderer);
 }
 
 /* swap; interchange v[i] and v[j] */
@@ -308,27 +311,12 @@ int strcmp_ignore_case(char *s1, char *s2)
   return c1 - c2;
 }
 
-static int current_index = 0;
-static int current_rev_index = 0;
-
-void clear_iterate()
+bool order_forward(int input)
 {
-  current_index = 0;
+  return input < 0;
 }
-
-void clear_iterate_rev()
+// sort reverse using >
+bool order_reverse(int input)
 {
-  current_rev_index = 0;
-}
-
-bool iterate(int number_of_items, int *next)
-{
-  *next = current_index++;
-  return *next < number_of_items;
-}
-
-bool iterate_rev(int number_of_items, int *next)
-{
-  *next = number_of_items - current_index++ - 1;
-  return *next >= 0;
+  return input > 0;
 }
