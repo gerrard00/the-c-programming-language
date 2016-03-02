@@ -18,7 +18,8 @@ void writelines(char *lineptr[], int nlines);
  * in the stdlib. probabaly wasn't there in c99 era */
 void my_qsort(void *lineptr[], int left, int right,
     int (*comparer)(void *, void *),
-    bool (*orderer)(int));
+    bool (*orderer)(int),
+    int (*wrapper_comparer)(void *, void *, int (*comparer)(void *, void *)));
 
 int numcmp(const char *, const char*);
 
@@ -44,18 +45,21 @@ Exercise 5-16. Add the -d ("directory order") option, which makes
 comparisons only on letters, numbers and blanks. Make sure it works in
 conjunction with- f.
 */
-/* support nested comparers (e.g. strcmp_directory) that modify the
+/* support nested comparers (e.g. directory) that modify the
  * input string before calling inner_comparer to do the actual
  * comparison
 */
-static char modified1[MAXLEN], modified2[MAXLEN];
-//TODO: this implementation using inner comparer is dumb and won't work for multiple. Add concept of tranformer.
-static int (*inner_comparer)(void *, void *);
-int strcmp_directory(char *s1, char *s2);
 
-int get_comparer_and_orderer(char *argument,
+int wrapper_strcmp_directory(void *s1, void *s2,
+    int (*inner_comparer)(void *, void *));
+
+int wrapper_strcmp_passthrough(void *s1, void *s2,
+    int (*inner_comparer)(void *, void *));
+
+int get_comparers_and_orderer(char *argument,
   int (**comparer)(void *, void *),
-  bool (**order)(int));
+  bool (**order)(int),
+  int (**wrapper_comparer)(void *, void *,int (*comparer)(void *, void *)));
 
 /*
 Exercise 5-17. Add a field-handling capability, so sorting may be done
@@ -68,23 +72,28 @@ index category and -n for the page numbers.
 int main(int argc, char *argv[])
 {
   int nlines; /* number of input lines */
-  int (*comparers[])(void*, void*) = {0};
+  int (*comparers[])(void *, void *) = {0};
   bool (*orderers[])(int) = {0};
+  int (*wrappers[])(void *, void *, int (*comparer)(void *, void *)) = {0};
 
   if (argc == 1) {
     comparers[0] = (int (*)(void*, void*))strcmp;
     orderers[0] = order_forward;
+    wrappers[0] = wrapper_strcmp_passthrough;
   } else {
     for(int arg_index = 1; arg_index < argc; arg_index++) {
       // -1 for index of pointer arrays, since we start from
       // arg 1
-      get_comparer_and_orderer(argv[arg_index],
-        &comparers[arg_index-1], &orderers[arg_index-1]);
+      get_comparers_and_orderer(argv[arg_index],
+        &comparers[arg_index-1], 
+        &orderers[arg_index-1],
+        &wrappers[arg_index-1]);
     }
   }
 
   if((nlines = readlines(lineptr, MAXLINES)) >= 0) {
-    my_qsort((void*)lineptr, 0, nlines-1, comparers[0], orderers[0]);
+    my_qsort((void*)lineptr, 0, nlines-1, 
+        comparers[0], orderers[0], wrappers[0]);
     writelines(lineptr, nlines);
     return 0;
   } else {
@@ -93,9 +102,10 @@ int main(int argc, char *argv[])
   }
 }
 
-int get_comparer_and_orderer(char *argument,
+int get_comparers_and_orderer(char *argument,
   int (**comparer)(void *, void *),
-  bool (**iterator)(int))
+  bool (**iterator)(int),
+  int (**wrapper_comparer)(void *, void *,int (*comparer)(void *, void *)))
 {
   char current_argument_char;
   bool numeric, reverse_order, ignore_case, directory_order;
@@ -150,10 +160,9 @@ int get_comparer_and_orderer(char *argument,
   }
 
   // see if we need a wrapper comparer
-  if (directory_order) {
-    inner_comparer = *comparer;
-    *comparer = (int (*)(void*, void*))strcmp_directory;
-  }
+  *wrapper_comparer = (directory_order)
+     ? wrapper_strcmp_directory
+     : wrapper_strcmp_passthrough;
 
   *iterator = (reverse_order ? order_reverse : order_forward);
 
@@ -210,7 +219,7 @@ int my_getline(char *s, int lim)
 
 #define ALLOCSIZE 10000
 
-static char allocbuf[ALLOCSIZE]; // Storeage for alloc
+static char allocbuf[ALLOCSIZE]; // Storage for alloc
 static char *allocp = allocbuf; // Next free position
 
 char *alloc(int n) // Return pointer to n characters
@@ -225,7 +234,8 @@ char *alloc(int n) // Return pointer to n characters
 /* my_qsort: sort v[left]...v[right] into increasing order */
 void my_qsort(void *v[], int left, int right,
     int (*comparer)(void *, void *),
-    bool (*orderer)(int))
+    bool (*orderer)(int),
+    int (*wrapper_comparer)(void *, void *, int (*comparer)(void *, void *)))
 {
   int i, last;
   void swap(void *v[], int i, int j);
@@ -236,14 +246,14 @@ void my_qsort(void *v[], int left, int right,
   swap(v, left, (left + right)/2);
   last = left;
   for(i = left+1; i <= right; i++) {
-    int x = (*comparer)(v[i], v[left]);
+    int x = (*wrapper_comparer)(v[i], v[left], comparer);
     if((*orderer)(x)) {
       swap(v, ++last, i);
     }
   }
   swap(v, left, last);
-  my_qsort(v, left, last - 1, comparer, orderer);
-  my_qsort(v, last+1, right, comparer, orderer);
+  my_qsort(v, left, last - 1, comparer, orderer, wrapper_comparer);
+  my_qsort(v, last+1, right, comparer, orderer, wrapper_comparer);
 }
 
 /* swap; interchange v[i] and v[j] */
@@ -289,7 +299,10 @@ void copy_directory_chars(char *from, char *to)
   }
 }
 
-int strcmp_directory(char *s1, char *s2)
+static char modified1[MAXLEN], modified2[MAXLEN];
+
+int wrapper_strcmp_directory(void *s1, void *s2, 
+    int (*inner_comparer)(void *, void *))
 {
   char *s1mod = modified1;
   char *s2mod = modified2;
@@ -298,6 +311,13 @@ int strcmp_directory(char *s1, char *s2)
   copy_directory_chars(s2, s2mod);
 
   return (*inner_comparer)(modified1, modified2);
+}
+
+// transparent passthrough wrapper
+int wrapper_strcmp_passthrough(void *s1, void *s2, 
+    int (*inner_comparer)(void *, void *))
+{
+  return (*inner_comparer)(s1, s2);
 }
 
 int strcmp_ignore_case(char *s1, char *s2)
@@ -315,6 +335,7 @@ bool order_forward(int input)
 {
   return input < 0;
 }
+
 // sort reverse using >
 bool order_reverse(int input)
 {

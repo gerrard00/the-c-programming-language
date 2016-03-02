@@ -58,121 +58,121 @@ echo "**********"
 495
 zzz
 
-# echo "\n**********"
-# echo "case sensitive"
-# echo "**********"
+echo "\n**********"
+echo "case sensitive"
+echo "**********"
 
-# ./$program.o <<-zzz 
-# aaaaaaaaaddd
-# aaa
-# bbb
-# AAA
-# BBB
-# ccc
-# zzz
+./$program.o <<-zzz 
+aaaaaaaaaddd
+aaa
+bbb
+AAA
+BBB
+ccc
+zzz
 
-# echo "\n**********"
-# echo "case insensitive"
-# echo "**********"
+echo "\n**********"
+echo "case insensitive"
+echo "**********"
 
-# ./$program.o -f <<-zzz 
-# aaaaaaaaaddd
-# aaa
-# bbb
-# AAA
-# BBB
-# ccc
-# zzz
+./$program.o -f <<-zzz 
+aaaaaaaaaddd
+aaa
+bbb
+AAA
+BBB
+ccc
+zzz
 
-# echo "\n**********"
-# echo "case insensitive reverse"
-# echo "**********"
+echo "\n**********"
+echo "case insensitive reverse"
+echo "**********"
 
-# ./$program.o -fr <<-zzz 
-# aaaaaaaaaddd
-# aaa
-# bbb
-# AAA
-# BBB
-# ccc
-# zzz
+./$program.o -fr <<-zzz 
+aaaaaaaaaddd
+aaa
+bbb
+AAA
+BBB
+ccc
+zzz
 
-# echo "\n**********"
-# echo "without directory"
-# echo "**********"
+echo "\n**********"
+echo "without directory"
+echo "**********"
 
-# ./$program.o <<-zzz 
-# AAABBBCCC
-# AAA.ccc.ddd
-# aaa/bbb/ccc
-# aaa/ddd/eee
-# aaabbbccc
-# AAA/BBB/CCC
-# AAA/DDD/EEE
-# BBB/CCC/DDD
-# zzz
+./$program.o <<-zzz 
+AAABBBCCC
+AAA.ccc.ddd
+aaa/bbb/ccc
+aaa/ddd/eee
+aaabbbccc
+AAA/BBB/CCC
+AAA/DDD/EEE
+BBB/CCC/DDD
+zzz
 
-# echo "\n**********"
-# echo "numeric and directory fail"
-# echo "**********"
+echo "\n**********"
+echo "numeric and directory fail"
+echo "**********"
 
-# ./$program.o -nd <<-zzz 
-# zzz
-# echo "\n**********"
-# echo "case sensitive directory"
-# echo "**********"
+./$program.o -nd <<-zzz 
+zzz
+echo "\n**********"
+echo "case sensitive directory"
+echo "**********"
 
-# ./$program.o -d <<-zzz 
-# AAABBBCCC
-# AAA.ccc.ddd
-# aaa/bbb/ccc
-# aaa/ddd/eee
-# aaabbbccc
-# AAA/BBB/CCC
-# AAA/DDD/EEE
-# BBB/CCC/DDD
-# zzz
+./$program.o -d <<-zzz 
+AAABBBCCC
+AAA.ccc.ddd
+aaa/bbb/ccc
+aaa/ddd/eee
+aaabbbccc
+AAA/BBB/CCC
+AAA/DDD/EEE
+BBB/CCC/DDD
+zzz
 
-# echo "\n**********"
-# echo "case insensitive directory"
-# echo "**********"
+echo "\n**********"
+echo "case insensitive directory"
+echo "**********"
 
-# ./$program.o -fd <<-zzz 
-# AAABBBCCC
-# AAA.ccc.ddd
-# aaa/bbb/ccc
-# aaa/ddd/eee
-# aaabbbccc
-# AAA/BBB/CCC
-# AAA/DDD/EEE
-# BBB/CCC/DDD
-# zzz
+./$program.o -fd <<-zzz 
+AAABBBCCC
+AAA.ccc.ddd
+aaa/bbb/ccc
+aaa/ddd/eee
+aaabbbccc
+AAA/BBB/CCC
+AAA/DDD/EEE
+BBB/CCC/DDD
+zzz
 
-# echo "\n**********"
-# echo "case insensitive directory reverse"
-# echo "**********"
+echo "\n**********"
+echo "case insensitive directory reverse"
+echo "**********"
 
-# ./$program.o -fdr <<-zzz 
-# AAABBBCCC
-# AAA.ccc.ddd
-# aaa/bbb/ccc
-# aaa/ddd/eee
-# aaabbbccc
-# AAA/BBB/CCC
-# AAA/DDD/EEE
-# BBB/CCC/DDD
-# zzz
+./$program.o -fdr <<-zzz 
+AAABBBCCC
+AAA.ccc.ddd
+aaa/bbb/ccc
+aaa/ddd/eee
+aaabbbccc
+AAA/BBB/CCC
+AAA/DDD/EEE
+BBB/CCC/DDD
+zzz
 
-# echo "\n**********"
-# echo "multiple fields"
-# echo "**********"
+echo "\n**********"
+echo "multiple fields"
+echo "**********"
 
-# ./$program.o -df -n <<-zzz 
-# apples 8
-# bananas 6
-# apples 7
-# banana 5
-# cantaloupe 3
-# apples 0
-# cantaloupe 9
-# zzz
+./$program.o -df -n <<-zzz 
+apples 8
+bananas 6
+apples 7
+banana 5
+cantaloupe 3
+apples 0
+cantaloupe 9
+zzz
