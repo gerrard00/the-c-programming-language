@@ -47,10 +47,10 @@ echo "**********"
 zzz
 
 echo "\n**********"
-echo "numeric reverse"
+echo "numeric and reverse"
 echo "**********"
 
-./$program.o -r -n <<-zzz 
+./$program.o -rn <<-zzz 
 1
 300
 25
@@ -85,6 +85,19 @@ ccc
 zzz
 
 echo "\n**********"
+echo "case insensitive reverse"
+echo "**********"
+
+./$program.o -fr <<-zzz 
+aaaaaaaaaddd
+aaa
+bbb
+AAA
+BBB
+ccc
+zzz
+
+echo "\n**********"
 echo "without directory"
 echo "**********"
 
@@ -101,7 +114,7 @@ echo "\n**********"
 echo "numeric and directory fail"
 echo "**********"
 
-./$program.o -n -d <<-zzz 
+./$program.o -nd <<-zzz 
 AAABBBCCC
 aaa/bbb/ccc
 aaa/ddd/eee
@@ -126,7 +139,7 @@ echo "\n**********"
 echo "case insensitive directory"
 echo "**********"
 
-./$program.o -f -d <<-zzz 
+./$program.o -fd <<-zzz 
 AAABBBCCC
 aaa/bbb/ccc
 aaa/ddd/eee
@@ -135,3 +148,15 @@ AAA/BBB/CCC
 AAA/DDD/EEE
 zzz
 
+echo "\n**********"
+echo "case insensitive directory reverse"
+echo "**********"
+
+./$program.o -fdr <<-zzz 
+AAABBBCCC
+aaa/bbb/ccc
+aaa/ddd/eee
+aaabbbccc
+AAA/BBB/CCC
+AAA/DDD/EEE
+zzz
