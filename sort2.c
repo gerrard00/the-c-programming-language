@@ -48,99 +48,108 @@ static char modified1[MAXLEN], modified2[MAXLEN];
 static int (*inner_comparer)(void *, void *);
 int strcmp_directory(char *s1, char *s2);
 
+int get_comparer_and_iterator(char *argument, 
+  int (**comparer)(void *, void *),
+  bool (**iterator)(int, int *));
+
 /*
 Exercise 5-17. Add a field-handling capability, so sorting may be done 
 on fields within lines, each field sorted according to an independent 
 set of options. (The index for this book was sorted with -df for the 
 index category and -n for the page numbers.
 */
-//TODO: support a static array of comparers, instead of the current local scalar var in main
+//TODO: support an array of comparers, instead of the current local scalar var in main
 /* sort input lines */
 int main(int argc, char *argv[])
 {
   int nlines; /* number of input lines */
-  bool numeric, reverse_order, ignore_case, directory_order;
   int (*comparer)(void*, void*) = NULL;
-  char current_argument_char;
+  bool (*iterator)(int, int *) = NULL;
 
-  numeric = reverse_order = ignore_case = directory_order = false;
-
-  for(int arg_index = 1; arg_index < argc; arg_index++) {
-    char *current_argument = argv[arg_index];
-    if (*current_argument != '-') {
-      printf("Unknown option %s\n", current_argument);
-      return 4;
-    }
-
-    // skip the leading dash
-    current_argument++;
-
-    while((current_argument_char = *current_argument++) != '\0') {
-      switch(current_argument_char) {
-        case 'n':
-          numeric = true;
-          break;
-        case 'r':
-          reverse_order = true;
-          break;
-        case 'f':
-          ignore_case = true;
-          break;
-        case 'd':
-          directory_order = true;
-          break;
-        default:
-          printf("Unknown option.\n");
-          return 5;
-      }
-    }
-
-    if (numeric && ignore_case) {
-      printf("You cannot specify both -n and -f\n");
-      return 2;
-    }
-
-    if (numeric && directory_order) {
-      printf("You cannot specify both -n and -d\n");
-      return 3;
-    }
-
-    // determine primary comparer
-    if (numeric) {
-      comparer = (int (*)(void*, void*))numcmp;
-    } else if (ignore_case) {
-      comparer = (int (*)(void*, void*))strcmp_ignore_case;
-    }
-
-    //use default comparer if no args were specified 
-    if (comparer == NULL) {
-      comparer = (int (*)(void*, void*))strcmp;
-    }
-
-    // see if we need a wrapper comparer
-    if (directory_order) {
-      inner_comparer = comparer;
-      comparer = (int (*)(void*, void*))strcmp_directory;
-    }
-
-    argv[arg_index]++;
-  }
-
-
-  // if we still don't have a comparer (i.e. no args)
-  // use default comparer if no args were specified 
-  if (comparer == NULL) {
+  if (argc == 1) {
     comparer = (int (*)(void*, void*))strcmp;
+    iterator = iterate;
+  } else {
+    for(int arg_index = 1; arg_index < argc; arg_index++) {
+      get_comparer_and_iterator(argv[arg_index], &comparer, &iterator);
+    }
   }
-
+  
   if((nlines = readlines(lineptr, MAXLINES)) >= 0) {
     my_qsort((void*)lineptr, 0, nlines-1, comparer);
-    writelines(lineptr, nlines, (reverse_order ? iterate_rev : iterate));
+    writelines(lineptr, nlines, iterator);
     return 0;
   } else {
     printf("error: input too big to sort\n");
     return 1;
   }
+}
+
+int get_comparer_and_iterator(char *argument,
+  int (**comparer)(void *, void *),
+  bool (**iterator)(int, int *))
+{
+  char current_argument_char;
+  bool numeric, reverse_order, ignore_case, directory_order;
+  numeric = reverse_order = ignore_case = directory_order = false;
+
+  if (*argument != '-') {
+    printf("Unknown option %s\n", argument);
+    return 4;
+  }
+
+  // skip the leading dash
+  argument++;
+
+  while((current_argument_char = *argument++) != '\0') {
+    switch(current_argument_char) {
+      case 'n':
+        numeric = true;
+        break;
+      case 'r':
+        reverse_order = true;
+        break;
+      case 'f':
+        ignore_case = true;
+        break;
+      case 'd':
+        directory_order = true;
+        break;
+      default:
+        printf("Unknown option.\n");
+        return 5;
+    }
+  }
+
+  if (numeric && ignore_case) {
+    printf("You cannot specify both -n and -f\n");
+    return 2;
+  }
+
+  if (numeric && directory_order) {
+    printf("You cannot specify both -n and -d\n");
+    return 3;
+  }
+
+  // determine primary comparer
+  if (numeric) {
+    *comparer = (int (*)(void*, void*))numcmp;
+  } else if (ignore_case) {
+    *comparer = (int (*)(void*, void*))strcmp_ignore_case;
+  } else {
+    //use default comparer if no args were specified 
+    *comparer = (int (*)(void*, void*))strcmp;
+  }
+
+  // see if we need a wrapper comparer
+  if (directory_order) {
+    inner_comparer = *comparer;
+    *comparer = (int (*)(void*, void*))strcmp_directory;
+  }
+
+  *iterator = (reverse_order ? iterate_rev : iterate);
+
+  return 0;
 }
 
 int my_getline(char *, int);

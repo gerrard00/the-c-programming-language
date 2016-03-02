@@ -103,11 +103,13 @@ echo "**********"
 
 ./$program.o <<-zzz 
 AAABBBCCC
+AAA.ccc.ddd
 aaa/bbb/ccc
 aaa/ddd/eee
 aaabbbccc
 AAA/BBB/CCC
 AAA/DDD/EEE
+BBB/CCC/DDD
 zzz
 
 echo "\n**********"
@@ -115,12 +117,6 @@ echo "numeric and directory fail"
 echo "**********"
 
 ./$program.o -nd <<-zzz 
-AAABBBCCC
-aaa/bbb/ccc
-aaa/ddd/eee
-aaabbbccc
-AAA/BBB/CCC
-AAA/DDD/EEE
 zzz
 echo "\n**********"
 echo "case sensitive directory"
@@ -128,11 +124,13 @@ echo "**********"
 
 ./$program.o -d <<-zzz 
 AAABBBCCC
+AAA.ccc.ddd
 aaa/bbb/ccc
 aaa/ddd/eee
 aaabbbccc
 AAA/BBB/CCC
 AAA/DDD/EEE
+BBB/CCC/DDD
 zzz
 
 echo "\n**********"
@@ -141,11 +139,13 @@ echo "**********"
 
 ./$program.o -fd <<-zzz 
 AAABBBCCC
+AAA.ccc.ddd
 aaa/bbb/ccc
 aaa/ddd/eee
 aaabbbccc
 AAA/BBB/CCC
 AAA/DDD/EEE
+BBB/CCC/DDD
 zzz
 
 echo "\n**********"
@@ -154,9 +154,11 @@ echo "**********"
 
 ./$program.o -fdr <<-zzz 
 AAABBBCCC
+AAA.ccc.ddd
 aaa/bbb/ccc
 aaa/ddd/eee
 aaabbbccc
 AAA/BBB/CCC
 AAA/DDD/EEE
+BBB/CCC/DDD
 zzz
