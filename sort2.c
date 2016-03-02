@@ -6,6 +6,8 @@
 
 #define MAXLEN 1000
 #define MAXLINES 5000
+#define MAXARGS 5000
+
 char *lineptr[MAXLINES];
 
 int readlines(char *lineptr[], int nlines);
@@ -63,21 +65,24 @@ index category and -n for the page numbers.
 int main(int argc, char *argv[])
 {
   int nlines; /* number of input lines */
-  int (*comparer)(void*, void*) = NULL;
-  bool (*iterator)(int, int *) = NULL;
+  int (*comparers[])(void*, void*) = {0};
+  bool (*iterators[])(int, int *) = {0};
 
   if (argc == 1) {
-    comparer = (int (*)(void*, void*))strcmp;
-    iterator = iterate;
+    comparers[0] = (int (*)(void*, void*))strcmp;
+    iterators[0] = iterate;
   } else {
     for(int arg_index = 1; arg_index < argc; arg_index++) {
-      get_comparer_and_iterator(argv[arg_index], &comparer, &iterator);
+      // -1 for index of pointer arrays, since we start from
+      // arg 1
+      get_comparer_and_iterator(argv[arg_index], 
+        &comparers[arg_index-1], &iterators[arg_index-1]);
     }
   }
-  
+ 
   if((nlines = readlines(lineptr, MAXLINES)) >= 0) {
-    my_qsort((void*)lineptr, 0, nlines-1, comparer);
-    writelines(lineptr, nlines, iterator);
+    my_qsort((void*)lineptr, 0, nlines-1, comparers[0]);
+    writelines(lineptr, nlines, iterators[0]);
     return 0;
   } else {
     printf("error: input too big to sort\n");
