@@ -98,6 +98,13 @@ ccc
 zzz
 
 echo "\n**********"
+echo "numeric and directory fail"
+echo "**********"
+
+./$program.o -nd <<-zzz 
+zzz
+
+echo "\n**********"
 echo "without directory"
 echo "**********"
 
@@ -112,12 +119,6 @@ AAA/DDD/EEE
 BBB/CCC/DDD
 zzz
 
-echo "\n**********"
-echo "numeric and directory fail"
-echo "**********"
-
-./$program.o -nd <<-zzz 
-zzz
 echo "\n**********"
 echo "case sensitive directory"
 echo "**********"
@@ -171,7 +172,23 @@ echo "**********"
 apples 8
 bananas 6
 apples 7
-banana 5
+bananas 5
+bananas 4
+cantaloupe 3
+apples 0
+cantaloupe 9
+zzz
+
+echo "\n**********"
+echo "multiple fields, second reversed"
+echo "**********"
+
+./$program.o -df -nr <<-zzz 
+apples 8
+bananas 6
+apples 7
+bananas 5
+bananas 4
 cantaloupe 3
 apples 0
 cantaloupe 9

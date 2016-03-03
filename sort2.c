@@ -6,20 +6,19 @@
 
 #define MAXLEN 1000
 #define MAXLINES 5000
-#define MAXARGS 5000
+#define MAXARGS 20
 
 char *lineptr[MAXLINES];
 
 int readlines(char *lineptr[], int nlines);
-//TODO: the iterator can't be passed to readline, since we support distinct orders by field
 void writelines(char *lineptr[], int nlines);
 
 /* have to call it my_qsort because there is a qsort
  * in the stdlib. probabaly wasn't there in c99 era */
 void my_qsort(void *lineptr[], int left, int right,
-    int (*comparer)(void *, void *),
-    bool (*orderer)(int),
-    int (*wrapper_comparer)(void *, void *, int (*comparer)(void *, void *)));
+    int (*comparer[])(void *, void *),
+    bool (*orderer[])(int),
+    int (*wrapper_comparer[])(void *, void *, int (*comparer)(void *, void *)));
 
 int numcmp(const char *, const char*);
 
@@ -67,38 +66,41 @@ on fields within lines, each field sorted according to an independent
 set of options. (The index for this book was sorted with -df for the
 index category and -n for the page numbers.
 */
-//TODO: support an array of comparers, instead of the current local scalar var in main
+
 /* sort input lines */
 int main(int argc, char *argv[])
 {
   int nlines; /* number of input lines */
-  int (*comparers[])(void *, void *) = {0};
-  bool (*orderers[])(int) = {0};
-  int (*wrappers[])(void *, void *, int (*comparer)(void *, void *)) = {0};
+  int (*comparers[MAXARGS])(void *, void *) = {NULL};
+  bool (*orderers[MAXARGS])(int) = {NULL};
+  int (*wrappers[MAXARGS])(void *, void *, int (*comparer)(void *, void *)) = {NULL};
 
   if (argc == 1) {
     comparers[0] = (int (*)(void*, void*))strcmp;
     orderers[0] = order_forward;
     wrappers[0] = wrapper_strcmp_passthrough;
+  } else if (argc > MAXARGS) {
+    printf("Too many arguments.\n");
+    return -1;
   } else {
     for(int arg_index = 1; arg_index < argc; arg_index++) {
       // -1 for index of pointer arrays, since we start from
       // arg 1
       get_comparers_and_orderer(argv[arg_index],
-        &comparers[arg_index-1], 
+        &comparers[arg_index-1],
         &orderers[arg_index-1],
         &wrappers[arg_index-1]);
     }
   }
 
   if((nlines = readlines(lineptr, MAXLINES)) >= 0) {
-    my_qsort((void*)lineptr, 0, nlines-1, 
-        comparers[0], orderers[0], wrappers[0]);
+    my_qsort((void*)lineptr, 0, nlines-1,
+        comparers, orderers, wrappers);
     writelines(lineptr, nlines);
     return 0;
   } else {
     printf("error: input too big to sort\n");
-    return 1;
+    return -2;
   }
 }
 
@@ -164,7 +166,7 @@ int get_comparers_and_orderer(char *argument,
      ? wrapper_strcmp_directory
      : wrapper_strcmp_passthrough;
 
-  *iterator = (reverse_order ? order_reverse : order_forward);
+  *iterator = (reverse_order) ? order_reverse : order_forward;
 
   return 0;
 }
@@ -231,29 +233,92 @@ char *alloc(int n) // Return pointer to n characters
     return 0;
 }
 
+size_t get_field(const char *line, char *field, int start_index) {
+  char current;
+  int result = 0;
+
+  /* printf("starting generation: '%s' at index %d\n", line, start_index); */
+  
+  while((current = *(line + start_index + result)) != ' ' && current != '\0') {
+    /* printf("\t%c\n", current); */
+    field[result++] = current;
+  }
+  field[result] = '\0';
+
+  /* printf("generated field '%s' from '%s'\n", field, line); */
+
+  return result;
+}
+
 /* my_qsort: sort v[left]...v[right] into increasing order */
 void my_qsort(void *v[], int left, int right,
-    int (*comparer)(void *, void *),
-    bool (*orderer)(int),
-    int (*wrapper_comparer)(void *, void *, int (*comparer)(void *, void *)))
+    int (*comparers[])(void *, void *),
+    bool (*orderers[])(int),
+    int (*wrapper_comparers[])(void *, void *, int (*comparer)(void *, void *)))
 {
   int i, last;
   void swap(void *v[], int i, int j);
+  char fieldx[MAXLEN], fieldy[MAXLEN];
 
   if (left >= right) { /* do nothing if array contains */
     return;            /* fewer than two elements */
   }
+
   swap(v, left, (left + right)/2);
   last = left;
   for(i = left+1; i <= right; i++) {
-    int x = (*wrapper_comparer)(v[i], v[left], comparer);
-    if((*orderer)(x)) {
+    int current_comparison_value;
+    int field_index = 0;
+    int line_index_x = 0, line_index_y = 0;
+
+    while(
+      /* printf("test wrapper (field index: %d)\n", field_index) && */
+      wrapper_comparers[field_index]
+      &&
+      /* printf("get fieldx\n") && */
+      (line_index_x = get_field(v[i], fieldx, line_index_x))
+      &&
+      /* printf("get fieldy\n") && */
+      (line_index_y = get_field(v[left], fieldy, line_index_y))
+      &&
+      (
+       /* printf("comparison\n") && */
+        (current_comparison_value =
+          (*wrapper_comparers[field_index])(fieldx, fieldy, comparers[field_index])
+        )
+      )
+      == 0) {
+      field_index++;
+      line_index_x++;
+      line_index_y++;
+      /* printf("not my fault\n"); */
+      /* printf("fuck: %p\n", wrapper_comparers[field_index]); */
+      /* printf("shit: %d\n", wrapper_comparers[field_index] == NULL); */
+      /* printf("really not my fault\n"); */
+    }
+
+    /* printf("comparison result: %d\n", current_comparison_value); */
+    /* int loop = current_comparison_value; */
+
+    /* current_comparison_value = */
+    /*   (*wrapper_comparers[field_index -1])(v[i], v[left], comparers[field_index -1]); */
+
+    /* if (loop != current_comparison_value) { */
+    /*   printf("++++++++++++\n"); */
+    /*   printf("loop current_comparison_value: %d\n", loop); */
+    /*   printf("current_comparison_value: %d\n", current_comparison_value); */
+    /*   printf("i: %s left: %s\n", v[i], v[left]); */
+    /* } */
+
+    // if we have a non-zero comparison, run it by the ordering function
+    // to see if we should swap
+    if(current_comparison_value && (*orderers[field_index])(current_comparison_value)) {
       swap(v, ++last, i);
     }
   }
   swap(v, left, last);
-  my_qsort(v, left, last - 1, comparer, orderer, wrapper_comparer);
-  my_qsort(v, last+1, right, comparer, orderer, wrapper_comparer);
+  my_qsort(v, left, last - 1, comparers, orderers, wrapper_comparers);
+  my_qsort(v, last+1, right, comparers, orderers, wrapper_comparers);
 }
 
 /* swap; interchange v[i] and v[j] */
@@ -270,6 +335,7 @@ void swap(void *v[], int i, int j)
 int numcmp(const char *s1, const char *s2)
 {
   double v1, v2;
+  /* printf("num 1: %s 2: %s\n", s1, s2); */
 
   v1 = atof(s1);
   v2 = atof(s2);
@@ -297,11 +363,13 @@ void copy_directory_chars(char *from, char *to)
 
     from++;
   }
+
+  *to = '\0';
 }
 
 static char modified1[MAXLEN], modified2[MAXLEN];
 
-int wrapper_strcmp_directory(void *s1, void *s2, 
+int wrapper_strcmp_directory(void *s1, void *s2,
     int (*inner_comparer)(void *, void *))
 {
   char *s1mod = modified1;
@@ -310,13 +378,15 @@ int wrapper_strcmp_directory(void *s1, void *s2,
   copy_directory_chars(s1, s1mod);
   copy_directory_chars(s2, s2mod);
 
+  /* printf("directory modified s1: '%s' s2: '%s'\n", s1, s2); */
   return (*inner_comparer)(modified1, modified2);
 }
 
 // transparent passthrough wrapper
-int wrapper_strcmp_passthrough(void *s1, void *s2, 
+int wrapper_strcmp_passthrough(void *s1, void *s2,
     int (*inner_comparer)(void *, void *))
 {
+  /* printf("passthrough: %s %s\n", s1, s2); */
   return (*inner_comparer)(s1, s2);
 }
 
