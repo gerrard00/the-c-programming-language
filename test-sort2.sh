@@ -193,3 +193,30 @@ cantaloupe 3
 apples 0
 cantaloupe 9
 zzz
+
+echo "\n**********"
+echo "single field bug, apple order changed"
+echo "**********"
+
+./$program.o -dfr <<-zzz 
+apples 7
+bananas 6
+apples 8
+bananas 5
+bananas 4
+cantaloupe 3
+apples 0
+cantaloupe 9
+zzz
+
+echo "\n**********"
+echo "single field bug, default with spaces"
+echo "**********"
+
+./$program.o -df <<-zzz 
+do it
+andromeda is a galaxy
+electrocutioners
+catalogs
+bears eat fish
+zzz

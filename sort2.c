@@ -238,7 +238,7 @@ size_t get_field(const char *line, char *field, int start_index) {
   int result = 0;
 
   /* printf("starting generation: '%s' at index %d\n", line, start_index); */
-  
+
   while((current = *(line + start_index + result)) != ' ' && current != '\0') {
     /* printf("\t%c\n", current); */
     field[result++] = current;
@@ -268,51 +268,37 @@ void my_qsort(void *v[], int left, int right,
   last = left;
   for(i = left+1; i <= right; i++) {
     int current_comparison_value;
-    int field_index = 0;
+    // usually 1:1, but not if there are less comparers than fields
+    int field_index = 0, comparer_index = 0;
     int line_index_x = 0, line_index_y = 0;
 
     while(
-      /* printf("test wrapper (field index: %d)\n", field_index) && */
-      wrapper_comparers[field_index]
+      wrapper_comparers[comparer_index]
       &&
-      /* printf("get fieldx\n") && */
       (line_index_x = get_field(v[i], fieldx, line_index_x))
       &&
-      /* printf("get fieldy\n") && */
       (line_index_y = get_field(v[left], fieldy, line_index_y))
       &&
       (
-       /* printf("comparison\n") && */
         (current_comparison_value =
-          (*wrapper_comparers[field_index])(fieldx, fieldy, comparers[field_index])
+          (*wrapper_comparers[comparer_index])(fieldx, fieldy, comparers[comparer_index])
         )
       )
       == 0) {
       field_index++;
+      /* only increment our comparer_index if we have more comparers,
+       * otherwise we'll just re-use the last valid comparer.
+       */
+      if (wrapper_comparers[field_index]) {
+        comparer_index++;
+      }
       line_index_x++;
       line_index_y++;
-      /* printf("not my fault\n"); */
-      /* printf("fuck: %p\n", wrapper_comparers[field_index]); */
-      /* printf("shit: %d\n", wrapper_comparers[field_index] == NULL); */
-      /* printf("really not my fault\n"); */
     }
-
-    /* printf("comparison result: %d\n", current_comparison_value); */
-    /* int loop = current_comparison_value; */
-
-    /* current_comparison_value = */
-    /*   (*wrapper_comparers[field_index -1])(v[i], v[left], comparers[field_index -1]); */
-
-    /* if (loop != current_comparison_value) { */
-    /*   printf("++++++++++++\n"); */
-    /*   printf("loop current_comparison_value: %d\n", loop); */
-    /*   printf("current_comparison_value: %d\n", current_comparison_value); */
-    /*   printf("i: %s left: %s\n", v[i], v[left]); */
-    /* } */
 
     // if we have a non-zero comparison, run it by the ordering function
     // to see if we should swap
-    if(current_comparison_value && (*orderers[field_index])(current_comparison_value)) {
+    if(current_comparison_value && (*orderers[comparer_index])(current_comparison_value)) {
       swap(v, ++last, i);
     }
   }
@@ -372,6 +358,7 @@ static char modified1[MAXLEN], modified2[MAXLEN];
 int wrapper_strcmp_directory(void *s1, void *s2,
     int (*inner_comparer)(void *, void *))
 {
+  /* printf("compare directory\n"); */
   char *s1mod = modified1;
   char *s2mod = modified2;
 
@@ -392,6 +379,7 @@ int wrapper_strcmp_passthrough(void *s1, void *s2,
 
 int strcmp_ignore_case(char *s1, char *s2)
 {
+  /* printf("compare ignore case\n"); */
   char c1, c2;
 
   while(*s1 != '\0' && *s2 != '\0'
@@ -411,3 +399,4 @@ bool order_reverse(int input)
 {
   return input > 0;
 }
+
