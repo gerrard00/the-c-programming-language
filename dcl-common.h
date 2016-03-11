@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #define MAXTOKEN 100
 
-enum { NAME, PARENS, BRACKETS};
+enum { UNKNOWN, NAME, PARENS, BRACKETS};
 
 bool dcl(void) ;
 bool dirdcl (void);

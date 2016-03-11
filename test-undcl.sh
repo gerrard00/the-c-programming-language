@@ -5,7 +5,7 @@ program=undcl
 clear
 tmux clear-history
 
-echo "Fuck Test $program\n"
+echo "Test $program\n"
 gcc -g -Wall -Wextra -Wpedantic $program.c dcl-common.c -o $program.o
 
 
@@ -19,4 +19,18 @@ echo "**********"
 
 ./$program.o <<-zzz 
 x () * [] * () char
+y * () int
+zzz
+
+echo "\n**********"
+echo "extra parens"
+echo "**********"
+
+./$program.o <<-zzz 
+no () * char
+no () [] * * int
+no [] * () * char
+yes * () char
+b [] int
+yes [] * () bool
 zzz
