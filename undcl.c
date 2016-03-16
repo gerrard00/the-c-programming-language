@@ -5,10 +5,8 @@
 /* undcl: convert word description to declaration*/
 int main()
 {
-	int type, last_type;
+	int type;
 	char temp[MAXTOKEN];
-
-  last_type = UNKNOWN;
 
 	while(gettoken() != EOF) {
 		strcpy(out, token);
@@ -17,7 +15,7 @@ int main()
         // If the last token was an asterisk, we have a 
         // pointer to a function. We need to wrap the current
         // output in parens.
-        if (last_type == '*') {
+        if (previous_tokentype == '*') {
           sprintf(temp,"(%s)%s", out, token);
           strcpy(out, temp);
         } else {
@@ -32,7 +30,6 @@ int main()
 			} else {
 				printf("invalid input at %s\n", token);
 			}
-      last_type = type;
 		}
 		printf("%s\n", out);
 	}
