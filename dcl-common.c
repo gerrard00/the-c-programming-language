@@ -5,29 +5,23 @@
 
 int gettoken(void) /*return next token*/
 {
-  debug_print("\tgettoken called\n");
-  int c;
-  char *p= token;
+	int c;
+	char *p= token;
 
-  debug_print("previous: %s\n", token);
-  previous_tokentype = tokentype;
+	while((c = getc(stdin)) ==  ' ' || c == '\t') {
+		;
+	}
 
-  while((c = getc(stdin)) ==  ' ' || c == '\t') {
-    ;
-  }
-
-  if (c == '(') {
-    debug_print("last token type: %d\n", previous_tokentype);
-    /* if((c = getc(stdin)) == ')') { */
-    if(previous_tokentype == NAME) {
-      strcpy(token, "()");
+	if (c == '(') {
+		if((c = getc(stdin)) == ')') {
+      debug_print("matching parens, returning PARENS\n");
+			strcpy(token, "()");
       return tokentype = PARENS;
     } else {
       ungetc(c, stdin);
-      debug_print("gettoken returning (\n");
       return tokentype = '(';
     }
-  } else if (c == '[') {
+	} else if (c == '[') {
     for(*p++ = c; (*p++ = getchar()) != ']'; ) {
       ;
     }
@@ -48,13 +42,12 @@ int gettoken(void) /*return next token*/
 /*dirdcl:parse a direct declarator*/
 bool dirdcl(void)
 {
-  debug_print("\tdirdcl called\n");
+  debug_print("dirdcl called\n");
   int type;
 
+  debug_print("dirdcl token type before starting: %d\n", tokentype);
   if (tokentype == '(') { /* (dcl )*/
-    debug_print("openining parens\n");
     if (!dcl()) {
-      printf("error: parentheses should contain dcl.\n");
       return false;
     }
 
@@ -69,40 +62,18 @@ bool dirdcl(void)
     return false;
   }
 
+  debug_print("dirdcl about to call gettoken\n");
   while((type=gettoken()) == PARENS || type == BRACKETS) {
+  debug_print("dirdcl type in loop: %d\n", type);
     if (type == PARENS) {
-      strcat(out, " function");
-
-      int argument_index = 0;
-      while((type=gettoken()) != ')' && type != '\n' && type != EOF) {
-        if (argument_index == 0) {
-          strcat(out, " taking (");
-        }
-
-        if (type == ',') {
-          strcat(out, ", ");
-          continue;
-        }
-
-        // NOTE: the argument type and argument name will both
-        // be interpreted as a NAME by gettoken
-        if (argument_index % 2 == 0) {
-          strcat(out, token);
-        }
-
-        argument_index++;
-      }
-
-      if (argument_index > 0) {
-        strcat(out, ")");
-      }
-      strcat(out, " returning");
+      strcat(out, " function returning");
     } else {
       strcat (out," array");
       strcat(out, token);
       strcat (out," of");
     }
   }
+  debug_print("dirdcl type after loop: %d\n", type);
 
   return true;
 }
@@ -110,32 +81,29 @@ bool dirdcl(void)
 /*dcl:parse a declarator*/
 bool dcl(void)
 {
-  debug_print("\tdcl called\n");
-  int ns;
+  debug_print("dcl called\n");
+	int ns;
 
-  for (ns=0; gettoken() == '*'; ) { /* count *'s */
-    ns++;
-  }
-  if (tokentype == '(') {
-    debug_print("\tback with parens, about to call dirdcl\n");
-  }
-  if (!dirdcl()) {
-    printf("expected direct dcl to follow dcl.\n");
+  debug_print("dcl about to call gettoken\n");
+	for (ns=0; gettoken() == '*'; ) { /* count *'s */
+		ns++;
+	}
+	if (!dirdcl()) {
     return false;
   }
-  while(ns-- > 0) {
-    strcat(out, " pointer to");
-  }
+	while(ns-- > 0) {
+		strcat(out, " pointer to");
+	}
 
   return true;
 }
 
-void reset(void)
+void reset(void) 
 {
   char current_char;
 
   /* not really necessaryto clear these */
-  tokentype = UNKNOWN;
+  tokentype = 0;
   name[0] = '\0';
   datatype[0] = '\0';
 
