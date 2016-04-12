@@ -19,7 +19,9 @@ char name [MAXTOKEN]; /*identifier name*/
 char datatype[MAXTOKEN]; /*data type = char, int, etc.*/
 char out [1000]; /*output string*/
 
-#define DEBUG 1
+//TODO: remove this debug variable
+bool in_function_arguments;
+#define DEBUG 0
 /* http://stackoverflow.com/a/1644898/1011470 */
 #define debug_print(...) \
   do { if (DEBUG) fprintf(stderr, __VA_ARGS__); } while (0)
