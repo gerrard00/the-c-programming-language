@@ -105,9 +105,42 @@ int getword(char *word, int lim)
       printf("Unterminated string constant.\n");
       return -1;
     }
-    
+
     *w = '\0';
     return c;
+  }
+
+  // if we have "/*" assume that we are starting a comment.
+  // TODO: in a perfect world, we should only do this for the first two characters on a line
+  if (c == '/') {
+    // look for an asterisk to see if we are starting a comment
+    if ((c = getchar()) == '*') {
+      // now we have to find the end of the comment
+      while((c = getchar()) != EOF) {
+        // if the current char is an asterisk, we may have found
+        // the end of the comment
+        if (c == '*') {
+          // are we at the end?
+          if ((c = getchar()) == '/') {
+            // we found the end of our comment, break out of the loop
+            break;
+          } else {
+            ungetc(c, stdin);
+          }
+        }
+      }
+
+      if (c != '/') {
+        printf("Unterminated c style comment.\n");
+        return -1;
+      }
+
+      *w = '\0';
+      return c;
+    } else {
+      // not a comment
+      ungetc(c, stdin);
+    }
   }
 
   if (!isalpha(c)) {
@@ -126,4 +159,3 @@ int getword(char *word, int lim)
   *w = '\0';
   return word[0];
 }
-

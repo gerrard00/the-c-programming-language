@@ -47,3 +47,14 @@ echo "**********"
 int age;
 char *foo = "this is not an int";
 zzz
+
+echo "\n**********"
+echo "One char, one 'char' in comment"
+echo "**********"
+
+./$program.o <<-zzz 
+/* this is a c style comment about my char that has a * in it */
+char x;
+/* this is a statement with a forward slash that isn't a comment */
+int y = 14/7;
+zzz
