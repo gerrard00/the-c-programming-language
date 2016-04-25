@@ -20,7 +20,7 @@ echo "**********"
 int main() {
   int x = 7;
   int y = 10;
-  char z = 'a';
+  char my_char = 'a';
 
   while(x < 10) {
     x++;
@@ -29,4 +29,12 @@ int main() {
 
 void foo(int bar) {
 }
+zzz
+
+echo "\n**********"
+echo "One char, one char in underscore"
+echo "**********"
+
+./$program.o <<-zzz 
+char my_char = 'a';
 zzz

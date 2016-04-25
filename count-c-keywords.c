@@ -8,7 +8,7 @@ struct key {
 };
 
 struct key keytab[] = {
-	{ "auto",0 },
+  { "auto",0 },
   { "break", 0},
   { "case", 0},
   { "char", 0},
@@ -95,7 +95,9 @@ int getword(char *word, int lim)
     return c;
   }
   for( ; --lim > 0; w++) {
-    if (!isalnum(*w = getchar())) {
+    // a word ends when we have a char that's not a letter,
+    // number, or underscore
+    if (!isalnum(*w = getchar()) && *w != '_') {
       ungetc(*w, stdin);
       break;
     }
