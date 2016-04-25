@@ -38,3 +38,12 @@ echo "**********"
 ./$program.o <<-zzz 
 char my_char = 'a';
 zzz
+
+echo "\n**********"
+echo "One int, one 'int' in string constant"
+echo "**********"
+
+./$program.o <<-zzz 
+int age;
+char *foo = "this is not an int";
+zzz

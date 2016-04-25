@@ -90,10 +90,31 @@ int getword(char *word, int lim)
   if (c != EOF) {
     *w++ = c;
   }
+
+  // If the char is a quote, assume we are starting a string
+  // constant. We need to skip chars until we reach the end
+  // of the string constant.
+  if (c == '"') {
+    while((c = getchar()) != '"' && c != EOF && c!= '\n') {
+      ;
+    }
+
+    // if the current character isn't a closing quote, we have
+    // an unterminated string constant.
+    if (c != '"') {
+      printf("Unterminated string constant.\n");
+      return -1;
+    }
+    
+    *w = '\0';
+    return c;
+  }
+
   if (!isalpha(c)) {
     *w = '\0';
     return c;
   }
+
   for( ; --lim > 0; w++) {
     // a word ends when we have a char that's not a letter,
     // number, or underscore
