@@ -111,7 +111,6 @@ int getword(char *word, int lim)
   }
 
   // if we have "/*" assume that we are starting a comment.
-  // TODO: in a perfect world, we should only do this for the first two characters on a line
   if (c == '/') {
     // look for an asterisk to see if we are starting a comment
     if ((c = getchar()) == '*') {
@@ -141,6 +140,35 @@ int getword(char *word, int lim)
       // not a comment
       ungetc(c, stdin);
     }
+  }
+
+  // if we see a # it's a preprocessor directive
+  if (c == '#') {
+    // now we have to find the end of the directive
+    while((c = getchar()) != EOF) {
+      // if the current char is a line continuation ('/'), 
+      // and the next char is a newline, we need to swallow
+      // that newline since the directive continues.
+      if (c == '/') {
+        //is the next char a newline?
+        if ((c = getchar()) != '\n') {
+          // if not, unswallow the char, it's not a line
+          // continuation
+          ungetc(c, stdin);
+        }
+      } else if (c == '\n') {
+        // we've found the end of our directive
+        break;
+      }
+    }
+
+    if (c == EOF) {
+      printf("Unterminated directive.\n");
+      return -1;
+    }
+
+    *w = '\0';
+    return c;
   }
 
   if (!isalpha(c)) {

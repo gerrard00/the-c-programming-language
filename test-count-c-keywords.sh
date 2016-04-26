@@ -58,3 +58,18 @@ char x;
 /* this is a statement with a forward slash that isn't a comment */
 int y = 14/7;
 zzz
+
+echo "\n**********"
+echo "Three int, one 'int' in directive"
+echo "**********"
+
+./$program.o <<-zzz 
+#define max(a,b) \
+ ({ int _a = (a); \
+		 int _b = (b); \
+	 _a > _b ? _a : _b; })
+
+int foo = 7;
+int bar = 23;
+int baz =max(foo, bar);
+zzz
