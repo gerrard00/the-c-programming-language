@@ -5,7 +5,7 @@ clear
 tmux clear-history
 
 echo "^^^^^^^Test $pr^^^^^^^\n"
-gcc -g -Wall -Wextra -Wpedantic -Werror $program.c binary-tree.c -o $program.o
+gcc -g -Wall -Wextra -Wpedantic -Werror $program.c binary-tree-with-key.c -o $program.o
 
 
 if [[ $? -ne 0 ]]; then

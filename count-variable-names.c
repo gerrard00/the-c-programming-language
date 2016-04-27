@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
-#include "binary-tree.h"
+#include "binary-tree-with-key.h"
 
 #define MAXWORD 100
 
@@ -14,9 +14,9 @@ int main()
 
   while (getword(word, MAXWORD) != EOF) {
     if (root->word == NULL) {
-      root = addtree(NULL, word);
+      root = addtree(NULL, "gerrard", word);
     } else {
-      addtree(root, word); 
+      addtree(root, "gerrard", word); 
     }
 
     treeprint(root);
