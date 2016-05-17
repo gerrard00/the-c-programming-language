@@ -9,10 +9,11 @@ typedef struct tnode{   /* the tree node */
   int count;    /* number of occurrences */
   struct tnode *left;   /* left child */
   struct tnode *right;  /* right child */
+  void *extra_data; 
 } tnode;
 
-tnode *addtree(tnode *, char *);
-void treeprint(tnode *);
+tnode *addtree(tnode *, char *, tnode **found_node);
+void treeprint(tnode *p, void (*print_extra)(void*));
 tnode *talloc(void);
 // TODO: not requested by exercise, but free memory
 //
