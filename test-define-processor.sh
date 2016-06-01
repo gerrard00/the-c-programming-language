@@ -13,20 +13,24 @@ if [[ $? -ne 0 ]]; then
 fi
 
 echo "\n**********"
-echo "delete"
+echo "default"
 echo "**********"
 
 # valgrind --leak-check=full --show-leak-kinds=all ./$program.o <<-zzz
 ./$program.o <<-zzz
 #define GERRARD 38
+#define SARAH 42
 #define NANCY 4
 zzz
 
-# echo "\n**********"
-# echo "stupid"
-# echo "**********"
+echo "\n**********"
+echo "with undef"
+echo "**********"
 
-# # valgrind --leak-check=full --show-leak-kinds=all ./$program.o <<-zzz
-# ./$program.o <<-zzz
-# we are are are here here
-# zzz
+# valgrind --leak-check=full --show-leak-kinds=all ./$program.o <<-zzz
+./$program.o <<-zzz
+#define GERRARD 38
+#define SARAH 42
+#define NANCY 4
+#undef GERRARD
+zzz

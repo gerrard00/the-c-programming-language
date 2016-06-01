@@ -74,8 +74,6 @@ void undef(char *name)
     }
     np_previous = np;
   }
-
- //TODO: if nothing, need to update the  owning hash
 }
 
 void printtable()
