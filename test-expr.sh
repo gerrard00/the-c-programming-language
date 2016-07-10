@@ -5,13 +5,13 @@ function run_commands ()
   echo
   echo "$1"
 
-  eval "./reverse-polish-args.o $1"
+  eval "./expr.o $1"
 
   echo "________________________________"
 }
 
-echo "Test reverse-polish"
-clang -g -Wall -Wextra -Wpedantic -lm reverse-polish-args.c -o reverse-polish-args.o || exit 1
+echo "Test expr"
+clang -g -Wall -Wextra -Wpedantic -lm expr.c -o expr.o || exit 1
 
 run_commands "4 5 /"
 

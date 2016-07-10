@@ -29,7 +29,7 @@ float get_variable(char variable_name);
 int main()
 {
   int type;
-  double op2;
+  double op1, op2;
   int line_length;
   int line_index;
   char line[MAXLINE];
@@ -49,7 +49,15 @@ int main()
 
       switch (type) {
         case NUMBER:
-          push(atof(s));
+          // sscanf is only really usable here, anywhere
+          // else and we run into problems because it swallows
+          // newlines
+          if (sscanf(s, "%lf", &op1) > 0) {
+          push(op1);
+          } else {
+            printf("error: problem converting %s to a number.\n", s);
+            do_calculation = false;
+          }
           break;
         case '+':
           push(pop() + pop());

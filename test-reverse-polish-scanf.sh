@@ -5,13 +5,13 @@ function run_commands ()
   echo
   echo "$1"
 
-  ./reverse-polish.o <<< "$1"
+  ./reverse-polish-scanf.o <<< "$1"
 
   echo "________________________________"
 }
 
-echo "Test reverse-polish"
-clang -g -Wall -Wextra -Wpedantic -lm reverse-polish.c -o reverse-polish.o || exit 1
+echo "Test reverse-polish-scanf"
+clang -g -Wall -Wextra -Wpedantic -lm reverse-polish-scanf.c -o reverse-polish-scanf.o || exit 1
 
 run_commands "4 5 /"
 
