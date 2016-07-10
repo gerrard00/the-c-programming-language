@@ -248,7 +248,7 @@ float last_variable = 0;
 
 bool is_variable_name(char c)
 {
-  return (c == LAST_VARIABLE_CHAR 
+  return (c == LAST_VARIABLE_CHAR
       || (c >= 'A' && c <= 'Z'));
 }
 

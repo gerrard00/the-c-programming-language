@@ -38,7 +38,7 @@ int main()
 
   while((line_length = my_getline(line, MAXLINE)) > 0) {
     line_index = 0;
-  
+
     while ((type = getop(line, &line_index, s)) != EOF
         && line_index <= line_length) {
       /* printf("type: %c\n", type); */
@@ -211,7 +211,7 @@ int getop(char line[], int *start_index, char s[])
   int c;
   int result;
   int i = 0;
- 
+
   /* printf("about to look for whitespace %d\n", sp); */
   while((s[0] = c = line[(*start_index)++]) == ' ' || c == '\t') {
     /* printf("ping\n"); */
@@ -281,7 +281,7 @@ float last_variable = 0;
 
 bool is_variable_name(char c)
 {
-  return (c == LAST_VARIABLE_CHAR 
+  return (c == LAST_VARIABLE_CHAR
       || (c >= 'A' && c <= 'Z'));
 }
 
@@ -335,14 +335,14 @@ float get_variable(char variable_name)
 /* my_getline:get line into s, return length */
 int my_getline(char s[], int lim)
 {
-	int c, i;
+  int c, i;
 
-	i=0;
-	while(--lim > 0 && (c=getchar()) != EOF && c != '\n') {
-		s[i++] = c;
-	}
-	if(c =='\n' )
-		s[i++] = c;
-	s[i]='\0';
-	return i;
+  i=0;
+  while(--lim > 0 && (c=getchar()) != EOF && c != '\n') {
+    s[i++] = c;
+  }
+  if(c =='\n' )
+    s[i++] = c;
+  s[i]='\0';
+  return i;
 }
