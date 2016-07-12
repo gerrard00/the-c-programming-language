@@ -14,33 +14,33 @@ char pattern[] = "ould"; /* pattern to search for */
 /* find all lines matching pattern */
 int main( )
 {
-	char line[MAXLINE];
-	int found =0;
+  char line[MAXLINE];
+  int found =0;
   int found_index;
 
   /* slight modification, end the loop for an empty line */
-	while(my_getline(line, MAXLINE) > 0 && line[0] != '\n') {
-		if ((found_index = strrindex(line, pattern)) >= 0) {
-			printf("%d > %s",found_index, line);
-			found++;
- 		}
-	}
-	return found;
+  while(my_getline(line, MAXLINE) > 0 && line[0] != '\n') {
+    if ((found_index = strrindex(line, pattern)) >= 0) {
+      printf("%d > %s",found_index, line);
+      found++;
+    }
+  }
+  return found;
 }
 
 /* my_getline:get line into s, return length */
 int my_getline(char s[], int lim)
 {
-	int c, i;
+  int c, i;
 
-	i=0;
-	while(--lim > 0 && (c=getchar()) != EOF && c != '\n') {
-		s[i++] = c;
-	}
-	if(c =='\n' )
-		s[i++] = c;
-	s[i]='\0';
-	return i;
+  i=0;
+  while(--lim > 0 && (c=getchar()) != EOF && c != '\n') {
+    s[i++] = c;
+  }
+  if(c =='\n' )
+    s[i++] = c;
+  s[i]='\0';
+  return i;
 }
 
 /* strindex:return index of t in s, -1 if none */
