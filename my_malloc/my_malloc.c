@@ -55,7 +55,6 @@ void *my_malloc(unsigned nbytes)
 /* morecore: ask system for more memory */
 static Header *morecore(unsigned nu)
 {
-  printf(">>>>>>>>>>morecore: %d\n", nu);
   char *cp, *sbrk(int);
   Header *up;
 
@@ -97,4 +96,17 @@ void my_free(void *ap)
     p->s.ptr = bp;
   }
   freep = p;
+}
+
+void *my_calloc(unsigned nbytes)
+{
+  char *result = my_malloc(nbytes);
+
+  if (result != NULL) {
+    for(unsigned i = 0; i < nbytes; i++) {
+      *(result + i) = 0;
+    }
+  }
+
+  return result;
 }
