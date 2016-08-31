@@ -2,14 +2,18 @@
 #include "my_malloc.h"
 #include <stdlib.h>
 
-
 void test_malloc(void);
 void test_calloc(void);
+void test_malloc_too_big(void);
+void test_free_invalid(void);
 void dump(char *, int);
 
 int main()
 {
+  test_malloc();
   test_calloc();
+  test_malloc_too_big();
+  test_free_invalid();
 }
 
 void test_malloc(void)
@@ -85,4 +89,26 @@ void dump(char *ptr, int num)
   }
 
   printf("\n");
+}
+
+void test_malloc_too_big(void)
+{
+  unsigned tooBigNumBytes = (unsigned) -1;
+  void *ptr = my_malloc(tooBigNumBytes);
+
+  printf("Is it null (i.e. too big a request): %s\n",
+      ptr == NULL ? "true" : "false");
+}
+
+void test_free_invalid(void)
+{
+   /* test calling w/ NULL pointer */
+  my_free(NULL);
+
+  /* make it a long so we can easily get the size */
+  /* which is long */
+  long *ptr = (long *)my_malloc(1024);
+  printf("real size: %ld\n", *(ptr - 1));
+  *(ptr - 1) = (unsigned) -1;
+  my_free(ptr);
 }

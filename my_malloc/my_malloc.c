@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <limits.h>
 #include "my_malloc.h"
 
 typedef long Align; /* for alignment to long boundary */
@@ -18,11 +19,22 @@ static Header *freep = NULL; /* start of free list */
 
 static Header *morecore(unsigned);
 
+/* set plausible limit for my_malloc. Keep in mind
+ * modern C uses size_t, because unsigned is too small.
+ * Artificially set this to unsigned max - 10 for
+ * the exercise, even though that's unrealistic */
+#define MAX_ALLOWED_MALLOC UINT_MAX - 10
+
 /* malloc: general-purpose storage allocator */
 void *my_malloc(unsigned nbytes)
 {
   Header *p, *prevp;
   unsigned nunits;
+
+  /* request is too big */
+  if (nbytes > MAX_ALLOWED_MALLOC) {
+    return NULL;
+  }
 
   nunits = (nbytes + sizeof(Header) - 1)/sizeof(Header) + 1;
   if ((prevp = freep) == NULL) {
@@ -76,10 +88,24 @@ void my_free(void *ap)
 {
   Header  *bp, *p;
 
+  if (ap == NULL) {
+    // debug
+    printf("Null pointer\n");
+    return;
+  }
+
   bp = (Header *)ap - 1; /* point to block header */
+
+  // check to make sure size is plausible
+  if (bp->s.size == 0 || bp->s.size > MAX_ALLOWED_MALLOC) {
+    // debug
+    printf("Invalid size %u\n", bp->s.size);
+    return;
+  }
+
   for (p = freep; !(bp > p && bp < p->s.ptr); p = p->s.ptr) {
     if (p >= p->s.ptr && (bp > p || bp < p->s.ptr)) {
-      break; /* freed block at start or end of arena */
+      break; /* freed block at start or end of area */
     }
   }
 
