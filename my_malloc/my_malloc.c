@@ -25,6 +25,8 @@ static Header *morecore(unsigned);
  * the exercise, even though that's unrealistic */
 #define MAX_ALLOWED_MALLOC UINT_MAX - 10
 
+#define convert_nbytes_to_nunits(nbytes) (nbytes + sizeof(Header) - 1)/sizeof(Header) + 1
+
 /* malloc: general-purpose storage allocator */
 void *my_malloc(unsigned nbytes)
 {
@@ -36,7 +38,7 @@ void *my_malloc(unsigned nbytes)
     return NULL;
   }
 
-  nunits = (nbytes + sizeof(Header) - 1)/sizeof(Header) + 1;
+  nunits = convert_nbytes_to_nunits(nbytes);
   if ((prevp = freep) == NULL) {
     base.s.ptr = freep = prevp = &base;
     base.s.size = 0;
@@ -135,4 +137,34 @@ void *my_calloc(unsigned nbytes)
   }
 
   return result;
+}
+
+void bfree(void *p, unsigned n)
+{
+  unsigned nunits;
+
+  if (p == NULL
+      || n == 0 ) {
+    return;
+  }
+
+  /* if n > our largest size, change it to the largest size
+   * otherwise, our example size limitation code in free will
+   * thow */
+  n = (n <= MAX_ALLOWED_MALLOC)
+    ? n
+    : MAX_ALLOWED_MALLOC;
+
+  nunits = convert_nbytes_to_nunits(n);
+
+  // if it's not large enough to fit our union,
+  // just return and do nothing
+  if (nunits == 0) {
+    return;
+  }
+
+  Header *newHeader = (Header *)p;
+  newHeader->s.size = nunits;
+  /* add one here, because free expects to be past the header */
+  my_free(newHeader + 1);
 }

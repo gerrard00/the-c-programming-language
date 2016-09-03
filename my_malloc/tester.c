@@ -1,19 +1,24 @@
 #include <stdio.h>
-#include "my_malloc.h"
 #include <stdlib.h>
+#include <string.h>
+#include "my_malloc.h"
 
 void test_malloc(void);
 void test_calloc(void);
 void test_malloc_too_big(void);
 void test_free_invalid(void);
+void test_free_non(void);
+void test_bfree(void);
 void dump(char *, int);
 
 int main()
 {
-  test_malloc();
-  test_calloc();
-  test_malloc_too_big();
-  test_free_invalid();
+  printf("\n\ntesting\n\n");
+  /* test_malloc(); */
+  /* test_calloc(); */
+  /* test_malloc_too_big(); */
+  /* test_free_invalid(); */
+  test_bfree();
 }
 
 void test_malloc(void)
@@ -111,4 +116,45 @@ void test_free_invalid(void)
   printf("real size: %ld\n", *(ptr - 1));
   *(ptr - 1) = (unsigned) -1;
   my_free(ptr);
+}
+
+void test_bfree(void)
+{
+  /*
+   * create a string array with some digits and a target string
+  */
+  #define RONIN_LENGTH 100
+  /* we hope to see this string in the end */
+  #define EXPECTED_OUTPUT "Lone Wolf And Cub."
+  /* we'll lose one header length (16 bytes) */
+  /* prefix our expected output with one header length of junk */
+  #define ORIGINAL_INPUT "0123456789ABCDEF" EXPECTED_OUTPUT
+
+  /*
+    the first 16 chars will be overwritten with header
+    after our round trip
+  */
+  char ronin[RONIN_LENGTH] = ORIGINAL_INPUT;
+  void *trackingPtr = &ronin;
+
+  /*
+    allocate and deallocate a buffer, to ensure
+    frep is set.
+  */
+  void *ptr = my_malloc(1024);
+  my_free(ptr);
+
+  printf("ronin: %p\n", &ronin);
+  bfree(&ronin, RONIN_LENGTH);
+  char *charPtr = my_malloc(RONIN_LENGTH);
+  printf("charPtr: %p\n", charPtr);
+  printf("right pointer address? %s\n",
+      (charPtr == trackingPtr + 16)
+        ? "true"
+        : "false");
+  printf("dirty buffer contents: %s\n", charPtr);
+  printf("got expected output in dirty buffer? %s\n",
+      (strcmp(EXPECTED_OUTPUT, charPtr) == 0)
+        ? "true"
+        : "false");
 }
